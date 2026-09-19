@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const alert_controller_1 = require("../controllers/alert.controller");
+const router = (0, express_1.Router)();
+router.get('/', (req, res) => alert_controller_1.alertController.getAlerts(req, res));
+router.post('/', (req, res) => alert_controller_1.alertController.createAlert(req, res));
+router.patch('/:id/acknowledge', (req, res) => alert_controller_1.alertController.acknowledgeAlert(req, res));
+router.patch('/:id/resolve', (req, res) => alert_controller_1.alertController.resolveAlert(req, res));
+exports.default = router;

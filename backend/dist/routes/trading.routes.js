@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const trading_controller_1 = require("../controllers/trading.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.post('/session/start', auth_middleware_1.authMiddleware, trading_controller_1.startSession);
+router.get('/session/:id', auth_middleware_1.authMiddleware, trading_controller_1.getSession);
+router.post('/session/:id/stop', auth_middleware_1.authMiddleware, trading_controller_1.stopSession);
+router.get('/sessions', auth_middleware_1.authMiddleware, trading_controller_1.getUserSessions);
+router.post('/trade', auth_middleware_1.authMiddleware, trading_controller_1.executeTrade);
+exports.default = router;

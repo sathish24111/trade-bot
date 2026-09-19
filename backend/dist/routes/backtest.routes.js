@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const backtest_controller_1 = require("../controllers/backtest.controller");
+const router = (0, express_1.Router)();
+router.use(auth_middleware_1.authMiddleware);
+router.post('/run', backtest_controller_1.runBacktest);
+router.post('/compare', backtest_controller_1.compareStrategies);
+router.get('/history', backtest_controller_1.getBacktestHistory);
+router.get('/:id', backtest_controller_1.getBacktestById);
+exports.default = router;

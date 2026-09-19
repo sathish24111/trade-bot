@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Center TradePilot Shield / Navigation Arrow -->
+    <path
+        android:fillColor="#2563EB"
+        android:pathData="M54,24 L78,44 L78,72 L54,84 L30,72 L30,44 Z" />
+    <path
+        android:fillColor="#10B981"
+        android:pathData="M54,34 L70,48 L70,68 L54,76 L38,68 L38,48 Z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,42 L62,56 L46,56 Z" />
+</vector>

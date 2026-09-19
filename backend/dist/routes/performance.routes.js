@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const performance_controller_1 = require("../controllers/performance.controller");
+const auth_middleware_1 = require("../middleware/auth.middleware");
+const router = (0, express_1.Router)();
+router.get('/summary', auth_middleware_1.authMiddleware, performance_controller_1.getSummary);
+router.get('/daily', auth_middleware_1.authMiddleware, performance_controller_1.getDaily);
+router.get('/trades', auth_middleware_1.authMiddleware, performance_controller_1.getTrades);
+exports.default = router;

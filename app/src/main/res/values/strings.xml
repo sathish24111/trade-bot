@@ -1,0 +1,6 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="app_name">TradePilot</string>
+    <string name="tagline">Smart Trading Assistant</string>
+    <string name="demo_mode">DEMO MODE</string>
+    <string name="demo_disclaimer">Trading involves risk. Demo performance does not guarantee future results.</string>
+</resources>

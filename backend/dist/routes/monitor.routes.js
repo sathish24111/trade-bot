@@ -1,0 +1,10 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const monitor_controller_1 = require("../controllers/monitor.controller");
+const router = (0, express_1.Router)();
+router.get('/overview', (req, res) => monitor_controller_1.monitorController.getOverview(req, res));
+router.get('/market-health', (req, res) => monitor_controller_1.monitorController.getAllMarketHealth(req, res));
+router.get('/assets/:asset', (req, res) => monitor_controller_1.monitorController.getAssetHealth(req, res));
+router.post('/drift', (req, res) => monitor_controller_1.monitorController.calculateDrift(req, res));
+exports.default = router;

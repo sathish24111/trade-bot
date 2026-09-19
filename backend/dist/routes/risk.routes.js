@@ -1,0 +1,11 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const risk_controller_1 = require("../controllers/risk.controller");
+const router = (0, express_1.Router)();
+router.get('/overview', (req, res) => risk_controller_1.riskController.getOverview(req, res));
+router.get('/dashboard', (req, res) => risk_controller_1.riskController.getOverview(req, res));
+router.get('/limits', (req, res) => risk_controller_1.riskController.getLimits(req, res));
+router.get('/events', (req, res) => risk_controller_1.riskController.getEvents(req, res));
+router.post('/event', (req, res) => risk_controller_1.riskController.recordEvent(req, res));
+exports.default = router;
