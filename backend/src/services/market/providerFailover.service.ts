@@ -6,6 +6,7 @@ import { IMarketDataProvider } from './MarketDataProvider.interface';
 import { publicCryptoWsProvider, PublicCryptoWsProvider } from './publicCryptoWs.provider';
 import { publicCryptoRestProvider, PublicCryptoRestProvider } from './publicCryptoRest.provider';
 import { MockMarketDataProvider } from './MockMarketDataProvider';
+import { derivMarketProvider } from './derivMarket.provider';
 import { alertService } from '../monitoring/alert.service';
 import { broadcastEvent } from '../../websocket/websocket.server';
 
@@ -56,13 +57,22 @@ export class ProviderFailoverService implements IMarketDataProvider {
   }
 
   supportsAsset(symbol: string): boolean {
-    return this.wsProvider.supportsAsset(symbol) || this.mockProvider.supportsAsset(symbol);
+    return derivMarketProvider.supportsAsset(symbol) || this.wsProvider.supportsAsset(symbol) || this.mockProvider.supportsAsset(symbol);
   }
 
   /**
    * Main quote routing with failover
    */
   async getQuote(symbol: string, timeframe = '5m'): Promise<MarketQuote> {
+    // Check Deriv Provider first if it's a Deriv-supported asset (Synthetics / Forex)
+    if (derivMarketProvider.supportsAsset(symbol)) {
+      try {
+        return await derivMarketProvider.getQuote(symbol, timeframe);
+      } catch (err: any) {
+        console.warn(`[Failover] Deriv quote error for ${symbol}, falling back to mock: ${err.message}`);
+      }
+    }
+
     // 1. Try Primary WebSocket Provider
     if (this.currentTier === 'PRIMARY_WS') {
       try {
@@ -95,6 +105,15 @@ export class ProviderFailoverService implements IMarketDataProvider {
    * Main candle routing with failover
    */
   async getCandles(symbol: string, timeframe = '5m', count = 60): Promise<Candle[]> {
+    // Check Deriv Provider first if it's a Deriv-supported asset (Synthetics / Forex)
+    if (derivMarketProvider.supportsAsset(symbol)) {
+      try {
+        return await derivMarketProvider.getCandles(symbol, timeframe, count);
+      } catch (err: any) {
+        console.warn(`[Failover] Deriv candles error for ${symbol}, falling back to mock: ${err.message}`);
+      }
+    }
+
     if (this.currentTier === 'PRIMARY_WS') {
       try {
         if (this.wsProvider.getState() === 'HEALTHY' || this.wsProvider.getState() === 'RECOVERING') {
@@ -119,26 +138,46 @@ export class ProviderFailoverService implements IMarketDataProvider {
   }
 
   async getAllAssets(): Promise<MarketAsset[]> {
+    let baseAssets: MarketAsset[] = [];
     if (this.currentTier === 'PRIMARY_WS' && this.wsProvider.getState() === 'HEALTHY') {
       try {
-        return await this.wsProvider.getAllAssets();
+        baseAssets = await this.wsProvider.getAllAssets();
       } catch {
         await this.triggerFailover('PRIMARY_WS', 'FALLBACK_REST', 'Failover on getAllAssets');
       }
     }
 
-    if (this.currentTier === 'FALLBACK_REST') {
+    if (baseAssets.length === 0 && this.currentTier === 'FALLBACK_REST') {
       try {
-        return await this.restProvider.getAllAssets();
+        baseAssets = await this.restProvider.getAllAssets();
       } catch {
         await this.triggerFailover('FALLBACK_REST', 'SIMULATED', 'Failover to simulated on getAllAssets');
       }
     }
 
-    return await this.mockProvider.getAllAssets();
+    if (baseAssets.length === 0) {
+      baseAssets = await this.mockProvider.getAllAssets();
+    }
+
+    // Merge Deriv live assets (Synthetics & Forex)
+    try {
+      const derivAssets = await derivMarketProvider.getAllAssets();
+      const existingSymbols = new Set(baseAssets.map(a => a.symbol));
+      const newDerivAssets = derivAssets.filter(a => !existingSymbols.has(a.symbol));
+      return [...baseAssets, ...newDerivAssets];
+    } catch {
+      return baseAssets;
+    }
   }
 
   async getAsset(symbol: string, timeframe = '5m'): Promise<MarketAsset | null> {
+    if (derivMarketProvider.supportsAsset(symbol)) {
+      try {
+        const a = await derivMarketProvider.getAsset(symbol, timeframe);
+        if (a) return a;
+      } catch {}
+    }
+
     if (this.currentTier === 'PRIMARY_WS' && this.wsProvider.getState() === 'HEALTHY') {
       try {
         const a = await this.wsProvider.getAsset(symbol, timeframe);

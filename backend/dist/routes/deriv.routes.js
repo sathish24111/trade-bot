@@ -1,0 +1,12 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = require("express");
+const deriv_controller_1 = require("../controllers/deriv.controller");
+const router = (0, express_1.Router)();
+router.get('/status', deriv_controller_1.getDerivStatus);
+router.get('/assets', deriv_controller_1.getDerivAssets);
+router.post('/connect-demo', deriv_controller_1.connectDerivDemo);
+router.post('/disconnect-demo', deriv_controller_1.disconnectDerivDemo);
+router.post('/demo-proposal', deriv_controller_1.getDerivDemoProposal);
+router.post('/demo-trade', deriv_controller_1.executeDerivDemoTrade);
+exports.default = router;

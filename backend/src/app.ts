@@ -19,6 +19,7 @@ import exportRoutes from './routes/export.routes';
 import providerRoutes from './routes/provider.routes';
 import notificationRoutes from './routes/notification.routes';
 import experimentRoutes from './routes/experiment.routes';
+import derivRoutes from './routes/deriv.routes';
 import { apiLimiter } from './middleware/rateLimit.middleware';
 import { errorHandler } from './middleware/error.middleware';
 import { requestTraceMiddleware } from './middleware/requestTrace.middleware';
@@ -68,6 +69,7 @@ app.use('/api/export', exportRoutes);
 app.use('/api/providers', providerRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/experiments', experimentRoutes);
+app.use('/api/deriv', derivRoutes);
 
 // Centralized Error Handler
 app.use(errorHandler);

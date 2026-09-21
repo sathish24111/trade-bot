@@ -25,6 +25,7 @@ const export_routes_1 = __importDefault(require("./routes/export.routes"));
 const provider_routes_1 = __importDefault(require("./routes/provider.routes"));
 const notification_routes_1 = __importDefault(require("./routes/notification.routes"));
 const experiment_routes_1 = __importDefault(require("./routes/experiment.routes"));
+const deriv_routes_1 = __importDefault(require("./routes/deriv.routes"));
 const rateLimit_middleware_1 = require("./middleware/rateLimit.middleware");
 const error_middleware_1 = require("./middleware/error.middleware");
 const requestTrace_middleware_1 = require("./middleware/requestTrace.middleware");
@@ -69,5 +70,6 @@ exports.app.use('/api/export', export_routes_1.default);
 exports.app.use('/api/providers', provider_routes_1.default);
 exports.app.use('/api/notifications', notification_routes_1.default);
 exports.app.use('/api/experiments', experiment_routes_1.default);
+exports.app.use('/api/deriv', deriv_routes_1.default);
 // Centralized Error Handler
 exports.app.use(error_middleware_1.errorHandler);

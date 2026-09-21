@@ -6,6 +6,7 @@ const env_1 = require("../../config/env");
 const publicCryptoWs_provider_1 = require("./publicCryptoWs.provider");
 const publicCryptoRest_provider_1 = require("./publicCryptoRest.provider");
 const MockMarketDataProvider_1 = require("./MockMarketDataProvider");
+const derivMarket_provider_1 = require("./derivMarket.provider");
 const alert_service_1 = require("../monitoring/alert.service");
 const websocket_server_1 = require("../../websocket/websocket.server");
 class ProviderFailoverService {
@@ -48,12 +49,21 @@ class ProviderFailoverService {
         return this.mockProvider.name;
     }
     supportsAsset(symbol) {
-        return this.wsProvider.supportsAsset(symbol) || this.mockProvider.supportsAsset(symbol);
+        return derivMarket_provider_1.derivMarketProvider.supportsAsset(symbol) || this.wsProvider.supportsAsset(symbol) || this.mockProvider.supportsAsset(symbol);
     }
     /**
      * Main quote routing with failover
      */
     async getQuote(symbol, timeframe = '5m') {
+        // Check Deriv Provider first if it's a Deriv-supported asset (Synthetics / Forex)
+        if (derivMarket_provider_1.derivMarketProvider.supportsAsset(symbol)) {
+            try {
+                return await derivMarket_provider_1.derivMarketProvider.getQuote(symbol, timeframe);
+            }
+            catch (err) {
+                console.warn(`[Failover] Deriv quote error for ${symbol}, falling back to mock: ${err.message}`);
+            }
+        }
         // 1. Try Primary WebSocket Provider
         if (this.currentTier === 'PRIMARY_WS') {
             try {
@@ -86,6 +96,15 @@ class ProviderFailoverService {
      * Main candle routing with failover
      */
     async getCandles(symbol, timeframe = '5m', count = 60) {
+        // Check Deriv Provider first if it's a Deriv-supported asset (Synthetics / Forex)
+        if (derivMarket_provider_1.derivMarketProvider.supportsAsset(symbol)) {
+            try {
+                return await derivMarket_provider_1.derivMarketProvider.getCandles(symbol, timeframe, count);
+            }
+            catch (err) {
+                console.warn(`[Failover] Deriv candles error for ${symbol}, falling back to mock: ${err.message}`);
+            }
+        }
         if (this.currentTier === 'PRIMARY_WS') {
             try {
                 if (this.wsProvider.getState() === 'HEALTHY' || this.wsProvider.getState() === 'RECOVERING') {
@@ -110,25 +129,46 @@ class ProviderFailoverService {
         return await this.mockProvider.getCandles(symbol, timeframe, count);
     }
     async getAllAssets() {
+        let baseAssets = [];
         if (this.currentTier === 'PRIMARY_WS' && this.wsProvider.getState() === 'HEALTHY') {
             try {
-                return await this.wsProvider.getAllAssets();
+                baseAssets = await this.wsProvider.getAllAssets();
             }
             catch {
                 await this.triggerFailover('PRIMARY_WS', 'FALLBACK_REST', 'Failover on getAllAssets');
             }
         }
-        if (this.currentTier === 'FALLBACK_REST') {
+        if (baseAssets.length === 0 && this.currentTier === 'FALLBACK_REST') {
             try {
-                return await this.restProvider.getAllAssets();
+                baseAssets = await this.restProvider.getAllAssets();
             }
             catch {
                 await this.triggerFailover('FALLBACK_REST', 'SIMULATED', 'Failover to simulated on getAllAssets');
             }
         }
-        return await this.mockProvider.getAllAssets();
+        if (baseAssets.length === 0) {
+            baseAssets = await this.mockProvider.getAllAssets();
+        }
+        // Merge Deriv live assets (Synthetics & Forex)
+        try {
+            const derivAssets = await derivMarket_provider_1.derivMarketProvider.getAllAssets();
+            const existingSymbols = new Set(baseAssets.map(a => a.symbol));
+            const newDerivAssets = derivAssets.filter(a => !existingSymbols.has(a.symbol));
+            return [...baseAssets, ...newDerivAssets];
+        }
+        catch {
+            return baseAssets;
+        }
     }
     async getAsset(symbol, timeframe = '5m') {
+        if (derivMarket_provider_1.derivMarketProvider.supportsAsset(symbol)) {
+            try {
+                const a = await derivMarket_provider_1.derivMarketProvider.getAsset(symbol, timeframe);
+                if (a)
+                    return a;
+            }
+            catch { }
+        }
         if (this.currentTier === 'PRIMARY_WS' && this.wsProvider.getState() === 'HEALTHY') {
             try {
                 const a = await this.wsProvider.getAsset(symbol, timeframe);
