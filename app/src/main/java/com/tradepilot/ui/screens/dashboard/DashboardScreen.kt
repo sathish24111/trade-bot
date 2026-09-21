@@ -83,7 +83,7 @@ fun DashboardScreen(
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            text = "Demo Account",
+                            text = state.user.accountType.ifEmpty { "Deriv Demo (DOT94606083)" },
                             color = TextSecondary,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Medium

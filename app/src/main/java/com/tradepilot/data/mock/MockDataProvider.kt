@@ -262,10 +262,10 @@ object MockDataProvider {
     fun formatCurrency(amount: Double): String {
         val sign = if (amount > 0) "+" else if (amount < 0) "-" else ""
         val absVal = kotlin.math.abs(amount)
-        return String.format(Locale.US, "%s₹%,.2f", sign, absVal)
+        return String.format(Locale.US, "%s$%,.2f", sign, absVal)
     }
 
     fun formatBalance(amount: Double): String {
-        return String.format(Locale.US, "₹%,.2f", amount)
+        return String.format(Locale.US, "$%,.2f", amount)
     }
 }

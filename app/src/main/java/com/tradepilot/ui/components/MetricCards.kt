@@ -81,7 +81,7 @@ fun DemoBalanceCard(
             ) {
                 Column {
                     Text(
-                        text = "Demo Balance",
+                        text = "Deriv Demo Balance",
                         color = TextSecondary,
                         fontSize = 12.sp,
                         fontWeight = FontWeight.Medium

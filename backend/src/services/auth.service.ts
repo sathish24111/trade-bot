@@ -82,13 +82,22 @@ export class AuthService {
       throw new Error('User not found.');
     }
     const user = rows[0];
+
+    // Check if Deriv Demo account is linked
+    const { derivDemoTradingService } = await import('./trading/derivDemoTrading.service');
+    const derivInfo = derivDemoTradingService.getAccountInfo();
+
+    const isDerivLinked = derivInfo.connected || !!derivInfo.loginId;
+    const balance = isDerivLinked && derivInfo.balance > 0 ? derivInfo.balance : parseFloat(user.demo_balance.toString());
+    const accountType = isDerivLinked && derivInfo.loginId ? `Deriv Demo (${derivInfo.loginId})` : user.account_type;
+
     return {
       id: user.id,
       name: user.name,
       email: user.email,
       mobile: user.mobile,
-      demoBalance: parseFloat(user.demo_balance.toString()),
-      accountType: user.account_type,
+      demoBalance: balance,
+      accountType: accountType,
       isDemoMode: true
     };
   }
