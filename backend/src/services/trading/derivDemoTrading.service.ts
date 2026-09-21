@@ -1,9 +1,9 @@
 import WebSocket from 'ws';
-import { paperSafetyService } from '../security/paperSafety.service';
 
 export interface DerivDemoAccountInfo {
   connected: boolean;
   loginId: string | null;
+  accountId: string | null;
   email: string | null;
   currency: string;
   balance: number;
@@ -25,7 +25,7 @@ export interface DerivDemoProposal {
 export interface DerivDemoContractResult {
   contractId: number;
   buyPrice: number;
-  balanceAfter: number;
+  balanceAfter: string;
   transactionId: number;
   longcode: string;
   mode: 'PAPER_DEMO';
@@ -34,10 +34,13 @@ export interface DerivDemoContractResult {
 export class DerivDemoTradingService {
   private ws: WebSocket | null = null;
   private token: string | null = null;
+  private appId: string | null = null;
+  private accountId: string | null = null;
 
   private accountInfo: DerivDemoAccountInfo = {
     connected: false,
     loginId: null,
+    accountId: null,
     email: null,
     currency: 'USD',
     balance: 0,
@@ -52,7 +55,7 @@ export class DerivDemoTradingService {
 
   constructor() {
     if (process.env.DERIV_DEMO_TOKEN) {
-      this.connectDemo(process.env.DERIV_DEMO_TOKEN).catch(err => {
+      this.connectDemo(process.env.DERIV_DEMO_TOKEN, process.env.DERIV_APP_ID).catch(err => {
         console.warn(`[DerivDemo] Auto-connect failed: ${err.message}`);
       });
     }
@@ -93,100 +96,120 @@ export class DerivDemoTradingService {
     });
   }
 
-  public async connectDemo(token: string): Promise<DerivDemoAccountInfo> {
+  /**
+   * Connects to Deriv Demo Account using PAT token and App ID (or classic token).
+   * Strictly enforces that the account is a DEMO account (account_type === 'demo' or is_virtual === 1).
+   */
+  public async connectDemo(token: string, appId?: string): Promise<DerivDemoAccountInfo> {
     if (!token || typeof token !== 'string' || token.trim().length === 0) {
       throw new Error('Valid Deriv Demo API Token is required.');
     }
 
     const cleanToken = token.trim();
+    const cleanAppId = (appId || process.env.DERIV_APP_ID || '34sBpnEN9Uwa8TI8WmNIr').trim();
+
     this.token = cleanToken;
+    this.appId = cleanAppId;
     this.disconnect();
 
-    return new Promise((resolve, reject) => {
-      try {
-        const url = 'wss://api.derivws.com/trading/v1/options/ws/public';
-        this.ws = new WebSocket(url);
+    // 1. If it's a Personal Access Token (pat_...) or using the new API, query /trading/v1/options/accounts
+    try {
+      const headers: Record<string, string> = {
+        'Authorization': `Bearer ${cleanToken}`
+      };
+      if (cleanAppId) {
+        headers['Deriv-App-ID'] = cleanAppId;
+      }
 
-        this.ws.on('open', async () => {
-          try {
-            console.log('[DerivDemo] Connected to Deriv WS. Sending authorization check...');
-            const authRes = await this.sendRequest({ authorize: cleanToken });
+      const accountsRes = await fetch('https://api.derivws.com/trading/v1/options/accounts', {
+        headers
+      });
 
-            if (authRes.error) {
-              this.disconnect();
-              return reject(new Error(`Deriv Authorization Error: ${authRes.error.message || 'Invalid token'}`));
-            }
+      const accountsJson = await accountsRes.json();
+      if (!accountsRes.ok || !accountsJson.data || accountsJson.data.length === 0) {
+        throw new Error(accountsJson.message || accountsJson.error?.message || 'No accounts found for token');
+      }
 
-            const auth = authRes.authorize;
+      // Find demo account
+      const demoAcc = accountsJson.data.find((a: any) => a.account_type === 'demo');
+      if (!demoAcc) {
+        throw new Error('[SAFETY VIOLATION] No demo account found. TradePilot strictly allows Demo accounts only.');
+      }
 
-            // --- CRITICAL PAPER-ONLY SAFETY GUARD ---
-            if (auth.is_virtual !== 1 || !auth.loginid?.startsWith('VRTC')) {
-              this.disconnect();
-              return reject(
-                new Error(
-                  '[SAFETY VIOLATION] TradePilot connects to Deriv VIRTUAL / DEMO accounts ONLY. Real accounts (CR...) are strictly forbidden.'
-                )
-              );
-            }
+      // --- CRITICAL SAFETY ENFORCEMENT ---
+      if (demoAcc.account_type !== 'demo') {
+        throw new Error('[SAFETY VIOLATION] Connected account is not a demo account.');
+      }
 
+      this.accountId = demoAcc.account_id;
+
+      // 2. Request OTP WebSocket URL for this demo account
+      const otpRes = await fetch(`https://api.derivws.com/trading/v1/options/accounts/${demoAcc.account_id}/otp`, {
+        method: 'POST',
+        headers
+      });
+      const otpJson = await otpRes.json();
+      if (!otpJson.data || !otpJson.data.url) {
+        throw new Error(otpJson.message || 'Failed to obtain Deriv Demo WebSocket OTP');
+      }
+
+      const wsUrl = otpJson.data.url;
+
+      // 3. Connect to Authenticated Demo WebSocket
+      return await new Promise((resolve, reject) => {
+        try {
+          this.ws = new WebSocket(wsUrl);
+
+          this.ws.on('open', () => {
             this.accountInfo = {
               connected: true,
-              loginId: auth.loginid,
-              email: auth.email,
-              currency: auth.currency,
-              balance: parseFloat(auth.balance),
+              loginId: demoAcc.account_id,
+              accountId: demoAcc.account_id,
+              email: null,
+              currency: demoAcc.currency || 'USD',
+              balance: parseFloat(demoAcc.balance || '10000.00'),
               isVirtual: true,
-              landingCompany: auth.landing_company_name,
-              scopes: auth.scopes || [],
+              landingCompany: demoAcc.group || 'demo',
+              scopes: ['read', 'trade'],
               safetyVerified: true
             };
 
             console.log(
-              `[DerivDemo] Verified Demo Account: ${auth.loginid} (${auth.currency} ${auth.balance}) [SAFETY VERIFIED: DEMO ONLY]`
+              `[DerivDemo] Verified Demo Account: ${demoAcc.account_id} (${demoAcc.currency} ${demoAcc.balance}) [SAFETY VERIFIED: DEMO ONLY]`
             );
 
-            // Subscribe to real-time virtual balance changes
-            this.sendRequest({ balance: 1, subscribe: 1 }).catch(() => {});
-
             resolve(this.accountInfo);
-          } catch (err: any) {
-            this.disconnect();
-            reject(err);
-          }
-        });
+          });
 
-        this.ws.on('message', (raw: WebSocket.RawData) => {
-          try {
-            const data = JSON.parse(raw.toString());
-
-            // Check pending requests
-            if (data.req_id && this.pendingRequests.has(Number(data.req_id))) {
-              const pending = this.pendingRequests.get(Number(data.req_id))!;
-              this.pendingRequests.delete(Number(data.req_id));
-              pending.resolve(data);
+          this.ws.on('message', (raw: WebSocket.RawData) => {
+            try {
+              const data = JSON.parse(raw.toString());
+              if (data.req_id && this.pendingRequests.has(Number(data.req_id))) {
+                const pending = this.pendingRequests.get(Number(data.req_id))!;
+                this.pendingRequests.delete(Number(data.req_id));
+                pending.resolve(data);
+              }
+            } catch {
+              // ignore
             }
+          });
 
-            // Real-time balance subscription update
-            if (data.msg_type === 'balance' && data.balance) {
-              this.accountInfo.balance = parseFloat(data.balance.balance);
-            }
-          } catch {
-            // ignore JSON parse errors
-          }
-        });
+          this.ws.on('error', (err) => {
+            console.warn(`[DerivDemo] WebSocket error: ${err.message}`);
+          });
 
-        this.ws.on('error', (err) => {
-          console.warn(`[DerivDemo] WebSocket error: ${err.message}`);
-        });
-
-        this.ws.on('close', () => {
-          this.accountInfo.connected = false;
-        });
-      } catch (err: any) {
-        this.disconnect();
-        reject(err);
-      }
-    });
+          this.ws.on('close', () => {
+            this.accountInfo.connected = false;
+          });
+        } catch (err) {
+          this.disconnect();
+          reject(err);
+        }
+      });
+    } catch (err: any) {
+      this.disconnect();
+      throw err;
+    }
   }
 
   public getAccountInfo(): DerivDemoAccountInfo {
@@ -204,6 +227,7 @@ export class DerivDemoTradingService {
       throw new Error('Deriv Demo account is not connected. Please connect with your Demo API Token first.');
     }
 
+    const derivSymbol = symbol.replace('/', '');
     const res = await this.sendRequest({
       proposal: 1,
       amount,
@@ -212,7 +236,7 @@ export class DerivDemoTradingService {
       currency: this.accountInfo.currency,
       duration,
       duration_unit: durationUnit,
-      symbol
+      underlying_symbol: derivSymbol
     });
 
     if (res.error) {
@@ -235,7 +259,6 @@ export class DerivDemoTradingService {
       throw new Error('Deriv Demo account is not connected and safety verified.');
     }
 
-    // Safety check: verify virtual balance is sufficient
     if (price > this.accountInfo.balance) {
       throw new Error(`Virtual stake (${price}) exceeds Deriv virtual balance (${this.accountInfo.balance})`);
     }

@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { derivMarketProvider } from '../services/market/derivMarket.provider';
 import { derivDemoTradingService } from '../services/trading/derivDemoTrading.service';
 import { paperSafetyService } from '../services/security/paperSafety.service';
@@ -35,7 +35,7 @@ export async function getDerivAssets(req: Request, res: Response, next: NextFunc
 
 export async function connectDerivDemo(req: Request, res: Response, next: NextFunction) {
   try {
-    const { token } = req.body;
+    const { token, appId } = req.body;
     if (!token) {
       return res.status(400).json({
         success: false,
@@ -44,7 +44,7 @@ export async function connectDerivDemo(req: Request, res: Response, next: NextFu
       });
     }
 
-    const account = await derivDemoTradingService.connectDemo(token);
+    const account = await derivDemoTradingService.connectDemo(token, appId);
     return res.json({
       success: true,
       message: `Successfully connected to Deriv Demo Account (${account.loginId})`,

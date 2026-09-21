@@ -40,7 +40,7 @@ async function getDerivAssets(req, res, next) {
 }
 async function connectDerivDemo(req, res, next) {
     try {
-        const { token } = req.body;
+        const { token, appId } = req.body;
         if (!token) {
             return res.status(400).json({
                 success: false,
@@ -48,7 +48,7 @@ async function connectDerivDemo(req, res, next) {
                 ...paperSafety_service_1.paperSafetyService.getSafetyEnvelope()
             });
         }
-        const account = await derivDemoTrading_service_1.derivDemoTradingService.connectDemo(token);
+        const account = await derivDemoTrading_service_1.derivDemoTradingService.connectDemo(token, appId);
         return res.json({
             success: true,
             message: `Successfully connected to Deriv Demo Account (${account.loginId})`,
