@@ -9,6 +9,7 @@ const zod_1 = require("zod");
 const paperExecution_service_1 = require("../services/paperExecution.service");
 const startSessionSchema = zod_1.z.object({
     investmentAmount: zod_1.z.number().positive('Investment amount must be positive'),
+    asset: zod_1.z.string().optional().default('R_100'),
     strategy: zod_1.z.enum(['EMA_RSI', 'MACD', 'BOLLINGER_BANDS', 'MULTI_INDICATOR']),
     riskLevel: zod_1.z.enum(['LOW', 'MEDIUM', 'HIGH']),
     duration: zod_1.z.number().int().min(1).max(240).default(30)
@@ -17,7 +18,7 @@ async function startSession(req, res, next) {
     try {
         const data = startSessionSchema.parse(req.body);
         const userId = req.user.userId;
-        const session = await paperExecution_service_1.paperExecutionEngine.startSession(userId, data.investmentAmount, data.strategy, data.riskLevel, data.duration);
+        const session = await paperExecution_service_1.paperExecutionEngine.startSession(userId, data.investmentAmount, data.strategy, data.riskLevel, data.duration, data.asset);
         res.status(201).json({
             success: true,
             sessionId: session.id,

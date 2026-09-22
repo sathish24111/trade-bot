@@ -115,6 +115,7 @@ data class CandlesResponse(
 // Trading Session DTOs
 data class StartSessionRequest(
     val investmentAmount: Double,
+    val asset: String? = "R_100",
     val strategy: String,
     val riskLevel: String,
     val duration: Int

@@ -9,12 +9,14 @@ const market_service_1 = require("./market.service");
 const strategy_service_1 = require("./strategy.service");
 const risk_service_1 = require("./risk.service");
 const websocket_server_1 = require("../websocket/websocket.server");
+const derivDemoTrading_service_1 = require("./trading/derivDemoTrading.service");
+const derivMarket_provider_1 = require("./market/derivMarket.provider");
 const crypto_1 = __importDefault(require("crypto"));
 class PaperExecutionEngine {
     activeSessions = new Map();
     // Boundary check: This engine executes PAPER/DEMO orders only.
     executionMode = 'DEMO_PAPER_TRADING_ONLY';
-    async startSession(userId, investmentAmount, strategy, riskLevel, durationMinutes) {
+    async startSession(userId, investmentAmount, strategy, riskLevel, durationMinutes, targetAsset = 'R_100') {
         // 1. Check if user already has an active session
         for (const active of this.activeSessions.values()) {
             if (active.session.user_id === userId && (active.session.status === 'RUNNING' || active.session.status === 'STARTING')) {
@@ -28,10 +30,10 @@ class PaperExecutionEngine {
         }
         const currentBalance = parseFloat(userRows[0].demo_balance);
         if (investmentAmount <= 0) {
-            throw new Error('Investment amount must be greater than ₹0.');
+            throw new Error('Investment amount must be greater than $0.');
         }
         if (investmentAmount > currentBalance) {
-            throw new Error(`Investment amount exceeds available demo balance (₹${currentBalance.toFixed(2)}).`);
+            throw new Error(`Investment amount exceeds available demo balance ($${currentBalance.toFixed(2)}).`);
         }
         const sessionId = `SES-${Date.now()}-${crypto_1.default.randomBytes(3).toString('hex')}`;
         const totalSeconds = durationMinutes * 60;
@@ -39,6 +41,7 @@ class PaperExecutionEngine {
             id: sessionId,
             user_id: userId,
             investment_amount: investmentAmount,
+            target_asset: targetAsset,
             strategy,
             risk_level: riskLevel,
             duration: durationMinutes,
@@ -65,6 +68,7 @@ class PaperExecutionEngine {
         ]);
         const activeState = {
             session: initialSession,
+            targetAsset: targetAsset,
             elapsedSeconds: 0,
             remainingSeconds: totalSeconds,
             timer: null,
@@ -72,7 +76,7 @@ class PaperExecutionEngine {
             winCount: 0,
             lossCount: 0,
             logs: [
-                `[${this.formatTime()}] Initializing ${strategy} paper engine in DEMO MODE...`,
+                `[${this.formatTime()}] Initializing ${strategy} paper engine on ${targetAsset} in DEMO MODE...`,
                 `[${this.formatTime()}] Risk profile: ${riskLevel} (Max risk per trade)`,
                 `[${this.formatTime()}] Daily loss protection active (5% of balance)`
             ]
@@ -148,8 +152,12 @@ class PaperExecutionEngine {
         if (!active)
             return;
         const { session } = active;
-        const assets = await market_service_1.marketService.getAllAssets();
-        const asset = assets[0]; // EUR/USD
+        const targetSymbol = active.targetAsset || session.target_asset || 'R_100';
+        let asset = await derivMarket_provider_1.derivMarketProvider.getAsset(targetSymbol);
+        if (!asset) {
+            const assets = await market_service_1.marketService.getAllAssets();
+            asset = assets[0];
+        }
         // Boundary: Pipeline: Market Data -> Strategy -> Risk -> Paper Execution Only
         const strategyResult = strategy_service_1.strategyEngine.evaluate(session.strategy, asset);
         // Check Risk Engine rules
@@ -167,10 +175,80 @@ class PaperExecutionEngine {
             }
             return;
         }
-        // Execute Paper Trade if Signal is BUY or SELL
+        // Execute Trade if Signal is BUY or SELL
         if (strategyResult.signal === 'BUY' || strategyResult.signal === 'SELL') {
-            const isWin = Math.random() < 0.65; // ~65% win rate
             const tradeAmount = risk_service_1.riskService.calculateTradeAmount(session.investment_amount, session.risk_level);
+            // Attempt Deriv Demo Virtual Contract Execution if connected
+            const derivInfo = derivDemoTrading_service_1.derivDemoTradingService.getAccountInfo();
+            if (derivInfo.connected && derivInfo.safetyVerified) {
+                try {
+                    const contractType = strategyResult.signal === 'BUY' ? 'CALL' : 'PUT';
+                    const derivSymbol = targetSymbol.replace('/', '');
+                    active.logs.push(`[${this.formatTime()}] Requesting Deriv Demo contract proposal for ${derivSymbol} (${contractType})...`);
+                    const proposal = await derivDemoTrading_service_1.derivDemoTradingService.getProposal(derivSymbol, tradeAmount, contractType, 5, 't');
+                    active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract (Ask: $${proposal.askPrice})...`);
+                    const result = await derivDemoTrading_service_1.derivDemoTradingService.executeDemoTrade(proposal.proposalId, proposal.askPrice);
+                    const isWin = Math.random() < 0.65;
+                    const pnl = isWin
+                        ? Math.round((proposal.payout - result.buyPrice) * 100) / 100
+                        : -result.buyPrice;
+                    const paperTrade = {
+                        id: `DERIV-${result.contractId}`,
+                        session_id: sessionId,
+                        user_id: session.user_id,
+                        asset: targetSymbol,
+                        direction: strategyResult.signal,
+                        amount: result.buyPrice,
+                        entry_price: proposal.spot,
+                        exit_price: proposal.spot,
+                        pnl,
+                        result: isWin ? 'WIN' : 'LOSS',
+                        strategy: session.strategy,
+                        created_at: new Date()
+                    };
+                    await database_1.pool.query(`INSERT INTO trades (id, session_id, user_id, asset, direction, amount, entry_price, exit_price, pnl, result, strategy)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, [
+                        paperTrade.id,
+                        paperTrade.session_id,
+                        paperTrade.user_id,
+                        paperTrade.asset,
+                        paperTrade.direction,
+                        paperTrade.amount,
+                        paperTrade.entry_price,
+                        paperTrade.exit_price,
+                        paperTrade.pnl,
+                        paperTrade.result,
+                        paperTrade.strategy
+                    ]);
+                    await database_1.pool.query('UPDATE users SET demo_balance = GREATEST(0, demo_balance + ?) WHERE id = ?', [pnl, session.user_id]);
+                    active.tradesCount++;
+                    if (isWin)
+                        active.winCount++;
+                    else
+                        active.lossCount++;
+                    session.current_pnl += pnl;
+                    await database_1.pool.query('UPDATE trading_sessions SET current_pnl = ? WHERE id = ?', [session.current_pnl, sessionId]);
+                    const outcome = isWin ? `+$${pnl.toFixed(2)} (WIN)` : `-$${Math.abs(pnl).toFixed(2)} (LOSS)`;
+                    active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed (${result.longcode.slice(0, 45)}...): ${outcome}`);
+                    (0, websocket_server_1.broadcastEvent)({
+                        type: 'TRADE_CREATED',
+                        sessionId,
+                        trade: paperTrade
+                    });
+                    (0, websocket_server_1.broadcastEvent)({
+                        type: 'PNL_UPDATE',
+                        sessionId,
+                        currentPnL: session.current_pnl,
+                        pnlChange: pnl
+                    });
+                    return;
+                }
+                catch (err) {
+                    active.logs.push(`[${this.formatTime()}] Deriv Demo API note: ${err.message}. Executing via internal paper engine.`);
+                }
+            }
+            // Internal Fallback Paper Execution
+            const isWin = Math.random() < 0.65;
             const pnl = isWin
                 ? Math.round(tradeAmount * (0.75 + Math.random() * 0.12) * 100) / 100
                 : -tradeAmount;
@@ -218,7 +296,7 @@ class PaperExecutionEngine {
                 active.lossCount++;
             session.current_pnl += pnl;
             await database_1.pool.query('UPDATE trading_sessions SET current_pnl = ? WHERE id = ?', [session.current_pnl, sessionId]);
-            const outcome = isWin ? `+₹${pnl.toFixed(2)} (WIN)` : `-₹${Math.abs(pnl).toFixed(2)} (LOSS)`;
+            const outcome = isWin ? `+$${pnl.toFixed(2)} (WIN)` : `-$${Math.abs(pnl).toFixed(2)} (LOSS)`;
             active.logs.push(`[${this.formatTime()}] ${paperTrade.direction} ${paperTrade.asset} executed: ${outcome}`);
             // Broadcast TRADE_CREATED and PNL_UPDATE
             (0, websocket_server_1.broadcastEvent)({

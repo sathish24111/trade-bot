@@ -6,6 +6,7 @@ export interface TradingSession {
   id: string;
   user_id: number;
   investment_amount: number;
+  target_asset?: string;
   strategy: StrategyName;
   risk_level: RiskLevel;
   duration: number; // in minutes

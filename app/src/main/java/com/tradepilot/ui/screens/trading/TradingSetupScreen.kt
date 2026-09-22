@@ -89,7 +89,24 @@ fun TradingSetupScreen(
                 }
             }
 
-            // Section 2: Strategy
+            // Section 2: Target Asset (Deriv Synthetics & Forex)
+            item {
+                SectionCard(title = "Target Asset (Deriv)") {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        DerivAsset.values().forEach { asset ->
+                            val isSelected = state.selectedAsset == asset
+                            SelectableOptionCard(
+                                title = asset.displayName,
+                                subtitle = "${asset.category} • Symbol: ${asset.symbol}",
+                                isSelected = isSelected,
+                                onClick = { viewModel.selectAsset(asset) }
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Section 3: Strategy
             item {
                 SectionCard(title = "Strategy") {
                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -180,6 +197,7 @@ fun TradingSetupScreen(
     if (state.showConfirmationDialog) {
         val config = BotSessionConfig(
             investmentAmount = state.investmentAmount,
+            asset = state.selectedAsset,
             strategy = state.strategy,
             riskLevel = state.riskLevel,
             duration = state.duration

@@ -52,6 +52,8 @@ fun StartBotConfirmationDialog(
                 // Param rows
                 DialogParamRow(label = "Investment", value = MockDataProvider.formatBalance(config.investmentAmount))
                 HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 8.dp))
+                DialogParamRow(label = "Target Asset", value = config.asset.displayName)
+                HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 8.dp))
                 DialogParamRow(label = "Strategy", value = config.strategy.displayName)
                 HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(vertical = 8.dp))
                 DialogParamRow(label = "Risk", value = config.riskLevel.displayName)

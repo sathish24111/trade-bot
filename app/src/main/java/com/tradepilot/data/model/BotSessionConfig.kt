@@ -20,8 +20,18 @@ enum class SessionDuration(val displayName: String, val totalMinutes: Int) {
     HOUR_1("1 Hour", 60)
 }
 
+enum class DerivAsset(val symbol: String, val displayName: String, val category: String) {
+    VOLATILITY_100("R_100", "Volatility 100 Index", "Synthetics"),
+    VOLATILITY_50("R_50", "Volatility 50 Index", "Synthetics"),
+    VOLATILITY_25("R_25", "Volatility 25 Index", "Synthetics"),
+    VOLATILITY_100_1S("1HZ100V", "Volatility 100 (1s) Index", "Synthetics"),
+    EUR_USD("EUR/USD", "EUR/USD Forex", "Forex"),
+    GBP_USD("GBP/USD", "GBP/USD Forex", "Forex")
+}
+
 data class BotSessionConfig(
     val investmentAmount: Double = 500.0,
+    val asset: DerivAsset = DerivAsset.VOLATILITY_100,
     val strategy: TradingStrategy = TradingStrategy.EMA_RSI,
     val riskLevel: RiskLevel = RiskLevel.LOW,
     val duration: SessionDuration = SessionDuration.MIN_30

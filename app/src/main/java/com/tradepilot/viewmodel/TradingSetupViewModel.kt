@@ -13,6 +13,7 @@ data class TradingSetupUiState(
     val investmentAmount: Double = 500.0,
     val customAmountText: String = "",
     val isCustomSelected: Boolean = false,
+    val selectedAsset: DerivAsset = DerivAsset.VOLATILITY_100,
     val strategy: TradingStrategy = TradingStrategy.EMA_RSI,
     val riskLevel: RiskLevel = RiskLevel.LOW,
     val duration: SessionDuration = SessionDuration.MIN_30,
@@ -56,6 +57,10 @@ class TradingSetupViewModel(
         )
     }
 
+    fun selectAsset(asset: DerivAsset) {
+        _uiState.value = _uiState.value.copy(selectedAsset = asset)
+    }
+
     fun selectStrategy(strategy: TradingStrategy) {
         _uiState.value = _uiState.value.copy(strategy = strategy)
     }
@@ -92,6 +97,7 @@ class TradingSetupViewModel(
         _uiState.value = _uiState.value.copy(showConfirmationDialog = false)
         val config = BotSessionConfig(
             investmentAmount = _uiState.value.investmentAmount,
+            asset = _uiState.value.selectedAsset,
             strategy = _uiState.value.strategy,
             riskLevel = _uiState.value.riskLevel,
             duration = _uiState.value.duration

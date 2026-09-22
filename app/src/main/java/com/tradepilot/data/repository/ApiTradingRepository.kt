@@ -107,6 +107,7 @@ class ApiTradingRepository(
             webSocketManager.connect()
             val req = StartSessionRequest(
                 investmentAmount = config.investmentAmount,
+                asset = config.asset.symbol,
                 strategy = config.strategy.name,
                 riskLevel = config.riskLevel.name,
                 duration = config.duration.totalMinutes

@@ -6,6 +6,7 @@ import { RiskLevel, StrategyName } from '../models/TradingSession';
 
 const startSessionSchema = z.object({
   investmentAmount: z.number().positive('Investment amount must be positive'),
+  asset: z.string().optional().default('R_100'),
   strategy: z.enum(['EMA_RSI', 'MACD', 'BOLLINGER_BANDS', 'MULTI_INDICATOR']),
   riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']),
   duration: z.number().int().min(1).max(240).default(30)
@@ -21,7 +22,8 @@ export async function startSession(req: AuthRequest, res: Response, next: NextFu
       data.investmentAmount,
       data.strategy as StrategyName,
       data.riskLevel as RiskLevel,
-      data.duration
+      data.duration,
+      data.asset
     );
 
     res.status(201).json({
