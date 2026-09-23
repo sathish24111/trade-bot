@@ -46,6 +46,29 @@ class ApiAuthRepository(
             try {
                 val res = apiClient.apiService.checkHealth()
                 _isServerOnline.value = res.isSuccessful
+                if (res.isSuccessful) {
+                    val loginRes = apiClient.apiService.login(LoginRequest("demo@tradepilot.app", "123456"))
+                    if (loginRes.isSuccessful && loginRes.body()?.token != null) {
+                        val body = loginRes.body()!!
+                        val userDto = body.user!!
+                        apiClient.updateToken(body.token)
+
+                        val user = User(
+                            id = "user_${userDto.id}",
+                            fullName = userDto.name,
+                            email = userDto.email,
+                            mobileNumber = userDto.mobile ?: "+91 98765 43210",
+                            demoBalance = userDto.demoBalance,
+                            accountType = userDto.accountType,
+                            isDemoMode = true
+                        )
+
+                        _currentUser.value = user
+                        _isLoggedIn.value = true
+                        preferencesManager.saveUser(user)
+                        preferencesManager.setLoggedIn(true)
+                    }
+                }
             } catch (e: Exception) {
                 _isServerOnline.value = false
             }

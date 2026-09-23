@@ -34,7 +34,17 @@ class DerivDemoTradingService {
     getNextReqId() {
         return this.reqIdCounter++;
     }
-    sendRequest(req) {
+    async ensureConnected() {
+        if (!this.ws || this.ws.readyState !== ws_1.default.OPEN) {
+            const token = this.token || process.env.DERIV_DEMO_TOKEN;
+            const appId = this.appId || process.env.DERIV_APP_ID;
+            if (token) {
+                await this.connectDemo(token, appId);
+            }
+        }
+    }
+    async sendRequest(req) {
+        await this.ensureConnected();
         return new Promise((resolve, reject) => {
             if (!this.ws || this.ws.readyState !== ws_1.default.OPEN) {
                 return reject(new Error('Deriv WebSocket is not connected'));
