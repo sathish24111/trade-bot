@@ -306,14 +306,17 @@ export class PaperExecutionEngine {
             ]
           );
 
+          const derivBal = parseFloat(result.balanceAfter);
+          derivDemoTradingService.getAccountInfo().balance = derivBal;
+
           await pool.query(
             'UPDATE users SET demo_balance = ? WHERE id = ?',
-            [derivDemoTradingService.getAccountInfo().balance || session.starting_balance + pnl, session.user_id]
+            [derivBal, session.user_id]
           );
 
           active.tradesCount++;
           if (isWin) active.winCount++; else active.lossCount++;
-          session.current_pnl += pnl;
+          session.current_pnl = parseFloat((derivBal - session.starting_balance).toFixed(2));
 
           await pool.query(
             'UPDATE trading_sessions SET current_pnl = ? WHERE id = ?',
@@ -321,7 +324,7 @@ export class PaperExecutionEngine {
           );
 
           const outcome = isWin ? `+$${pnl.toFixed(2)} (WIN)` : `-$${Math.abs(pnl).toFixed(2)} (LOSS)`;
-          active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed: ${outcome}`);
+          active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed: ${outcome} (Balance: $${derivBal.toFixed(2)})`);
 
           broadcastEvent({
             type: 'TRADE_CREATED',
