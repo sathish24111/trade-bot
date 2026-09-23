@@ -93,6 +93,13 @@ export class PaperExecutionEngine {
       ]
     );
 
+    // Ensure Deriv Demo account is connected
+    const { derivDemoTradingService } = await import('./trading/derivDemoTrading.service');
+    let derivInfo = derivDemoTradingService.getAccountInfo();
+    if (!derivInfo.connected) {
+      derivInfo = await derivDemoTradingService.ensureConnected();
+    }
+
     const activeState: ActiveSessionState = {
       session: initialSession,
       targetAsset: targetAsset,
@@ -116,7 +123,13 @@ export class PaperExecutionEngine {
       if (!this.activeSessions.has(sessionId)) return;
       const s = this.activeSessions.get(sessionId)!;
       s.session.status = 'RUNNING';
-      s.logs.push(`[${this.formatTime()}] SIMULATED MARKET DATA active. Running paper strategy...`);
+
+      const currentDerivInfo = derivDemoTradingService.getAccountInfo();
+      if (currentDerivInfo.connected) {
+        s.logs.push(`[${this.formatTime()}] Deriv Demo (${currentDerivInfo.loginId}) connected. Streaming live Deriv candles...`);
+      } else {
+        s.logs.push(`[${this.formatTime()}] SIMULATED MARKET DATA active. Running paper strategy...`);
+      }
 
       await pool.query('UPDATE trading_sessions SET status = ? WHERE id = ?', ['RUNNING', sessionId]);
 
@@ -229,11 +242,17 @@ export class PaperExecutionEngine {
       const tradeAmount = riskService.calculateTradeAmount(session.investment_amount, session.risk_level);
 
       // Attempt Deriv Demo Virtual Contract Execution if connected
-      const derivInfo = derivDemoTradingService.getAccountInfo();
+      let derivInfo = derivDemoTradingService.getAccountInfo();
+      if (!derivInfo.connected) {
+        derivInfo = await derivDemoTradingService.ensureConnected();
+      }
+
       if (derivInfo.connected && derivInfo.safetyVerified) {
         try {
           const contractType = strategyResult.signal === 'BUY' ? 'CALL' : 'PUT';
-          const derivSymbol = targetSymbol.replace('/', '');
+          let derivSymbol = targetSymbol.replace('/', '');
+          if (derivSymbol === 'EURUSD') derivSymbol = 'frxEURUSD';
+          if (derivSymbol === 'GBPUSD') derivSymbol = 'frxGBPUSD';
 
           active.logs.push(`[${this.formatTime()}] Requesting Deriv Demo contract proposal for ${derivSymbol} (${contractType})...`);
 
@@ -245,7 +264,7 @@ export class PaperExecutionEngine {
             't'
           );
 
-          active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract (Ask: $${proposal.askPrice})...`);
+          active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract #${proposal.proposalId} (Ask: $${proposal.askPrice})...`);
 
           const result = await derivDemoTradingService.executeDemoTrade(proposal.proposalId, proposal.askPrice);
 
@@ -288,8 +307,8 @@ export class PaperExecutionEngine {
           );
 
           await pool.query(
-            'UPDATE users SET demo_balance = GREATEST(0, demo_balance + ?) WHERE id = ?',
-            [pnl, session.user_id]
+            'UPDATE users SET demo_balance = ? WHERE id = ?',
+            [derivDemoTradingService.getAccountInfo().balance || session.starting_balance + pnl, session.user_id]
           );
 
           active.tradesCount++;
@@ -302,7 +321,7 @@ export class PaperExecutionEngine {
           );
 
           const outcome = isWin ? `+$${pnl.toFixed(2)} (WIN)` : `-$${Math.abs(pnl).toFixed(2)} (LOSS)`;
-          active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed (${result.longcode.slice(0, 45)}...): ${outcome}`);
+          active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed: ${outcome}`);
 
           broadcastEvent({
             type: 'TRADE_CREATED',
@@ -319,7 +338,7 @@ export class PaperExecutionEngine {
 
           return;
         } catch (err: any) {
-          active.logs.push(`[${this.formatTime()}] Deriv Demo API note: ${err.message}. Executing via internal paper engine.`);
+          active.logs.push(`[${this.formatTime()}] Deriv Demo API note: ${err.message}. Running fallback cycle.`);
         }
       }
 

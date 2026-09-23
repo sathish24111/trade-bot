@@ -1,4 +1,37 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -66,6 +99,12 @@ class PaperExecutionEngine {
             'STARTING',
             0.00
         ]);
+        // Ensure Deriv Demo account is connected
+        const { derivDemoTradingService } = await Promise.resolve().then(() => __importStar(require('./trading/derivDemoTrading.service')));
+        let derivInfo = derivDemoTradingService.getAccountInfo();
+        if (!derivInfo.connected) {
+            derivInfo = await derivDemoTradingService.ensureConnected();
+        }
         const activeState = {
             session: initialSession,
             targetAsset: targetAsset,
@@ -88,7 +127,13 @@ class PaperExecutionEngine {
                 return;
             const s = this.activeSessions.get(sessionId);
             s.session.status = 'RUNNING';
-            s.logs.push(`[${this.formatTime()}] SIMULATED MARKET DATA active. Running paper strategy...`);
+            const currentDerivInfo = derivDemoTradingService.getAccountInfo();
+            if (currentDerivInfo.connected) {
+                s.logs.push(`[${this.formatTime()}] Deriv Demo (${currentDerivInfo.loginId}) connected. Streaming live Deriv candles...`);
+            }
+            else {
+                s.logs.push(`[${this.formatTime()}] SIMULATED MARKET DATA active. Running paper strategy...`);
+            }
             await database_1.pool.query('UPDATE trading_sessions SET status = ? WHERE id = ?', ['RUNNING', sessionId]);
             (0, websocket_server_1.broadcastEvent)({
                 type: 'BOT_STATUS',
@@ -179,14 +224,21 @@ class PaperExecutionEngine {
         if (strategyResult.signal === 'BUY' || strategyResult.signal === 'SELL') {
             const tradeAmount = risk_service_1.riskService.calculateTradeAmount(session.investment_amount, session.risk_level);
             // Attempt Deriv Demo Virtual Contract Execution if connected
-            const derivInfo = derivDemoTrading_service_1.derivDemoTradingService.getAccountInfo();
+            let derivInfo = derivDemoTrading_service_1.derivDemoTradingService.getAccountInfo();
+            if (!derivInfo.connected) {
+                derivInfo = await derivDemoTrading_service_1.derivDemoTradingService.ensureConnected();
+            }
             if (derivInfo.connected && derivInfo.safetyVerified) {
                 try {
                     const contractType = strategyResult.signal === 'BUY' ? 'CALL' : 'PUT';
-                    const derivSymbol = targetSymbol.replace('/', '');
+                    let derivSymbol = targetSymbol.replace('/', '');
+                    if (derivSymbol === 'EURUSD')
+                        derivSymbol = 'frxEURUSD';
+                    if (derivSymbol === 'GBPUSD')
+                        derivSymbol = 'frxGBPUSD';
                     active.logs.push(`[${this.formatTime()}] Requesting Deriv Demo contract proposal for ${derivSymbol} (${contractType})...`);
                     const proposal = await derivDemoTrading_service_1.derivDemoTradingService.getProposal(derivSymbol, tradeAmount, contractType, 5, 't');
-                    active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract (Ask: $${proposal.askPrice})...`);
+                    active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract #${proposal.proposalId} (Ask: $${proposal.askPrice})...`);
                     const result = await derivDemoTrading_service_1.derivDemoTradingService.executeDemoTrade(proposal.proposalId, proposal.askPrice);
                     const isWin = Math.random() < 0.65;
                     const pnl = isWin
@@ -220,7 +272,7 @@ class PaperExecutionEngine {
                         paperTrade.result,
                         paperTrade.strategy
                     ]);
-                    await database_1.pool.query('UPDATE users SET demo_balance = GREATEST(0, demo_balance + ?) WHERE id = ?', [pnl, session.user_id]);
+                    await database_1.pool.query('UPDATE users SET demo_balance = ? WHERE id = ?', [derivDemoTrading_service_1.derivDemoTradingService.getAccountInfo().balance || session.starting_balance + pnl, session.user_id]);
                     active.tradesCount++;
                     if (isWin)
                         active.winCount++;
@@ -229,7 +281,7 @@ class PaperExecutionEngine {
                     session.current_pnl += pnl;
                     await database_1.pool.query('UPDATE trading_sessions SET current_pnl = ? WHERE id = ?', [session.current_pnl, sessionId]);
                     const outcome = isWin ? `+$${pnl.toFixed(2)} (WIN)` : `-$${Math.abs(pnl).toFixed(2)} (LOSS)`;
-                    active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed (${result.longcode.slice(0, 45)}...): ${outcome}`);
+                    active.logs.push(`[${this.formatTime()}] Deriv Demo Contract #${result.contractId} executed: ${outcome}`);
                     (0, websocket_server_1.broadcastEvent)({
                         type: 'TRADE_CREATED',
                         sessionId,
@@ -244,7 +296,7 @@ class PaperExecutionEngine {
                     return;
                 }
                 catch (err) {
-                    active.logs.push(`[${this.formatTime()}] Deriv Demo API note: ${err.message}. Executing via internal paper engine.`);
+                    active.logs.push(`[${this.formatTime()}] Deriv Demo API note: ${err.message}. Running fallback cycle.`);
                 }
             }
             // Internal Fallback Paper Execution
