@@ -34,15 +34,6 @@ class DerivDemoTradingService {
     getNextReqId() {
         return this.reqIdCounter++;
     }
-    async ensureConnected() {
-        if (!this.ws || this.ws.readyState !== ws_1.default.OPEN) {
-            const token = this.token || process.env.DERIV_DEMO_TOKEN;
-            const appId = this.appId || process.env.DERIV_APP_ID;
-            if (token) {
-                await this.connectDemo(token, appId);
-            }
-        }
-    }
     async sendRequest(req) {
         await this.ensureConnected();
         return new Promise((resolve, reject) => {
@@ -168,6 +159,22 @@ class DerivDemoTradingService {
             this.disconnect();
             throw err;
         }
+    }
+    async ensureConnected() {
+        if (this.accountInfo.connected && this.ws && this.ws.readyState === ws_1.default.OPEN) {
+            return this.accountInfo;
+        }
+        const token = this.token || process.env.DERIV_DEMO_TOKEN;
+        const appId = this.appId || process.env.DERIV_APP_ID;
+        if (token) {
+            try {
+                return await this.connectDemo(token, appId);
+            }
+            catch (err) {
+                console.warn(`[DerivDemo] ensureConnected failed: ${err.message}`);
+            }
+        }
+        return this.accountInfo;
     }
     getAccountInfo() {
         return { ...this.accountInfo };

@@ -62,6 +62,22 @@ export class AuthService {
 
     const token = this.generateToken(user.id, user.email);
 
+    // Fetch live Deriv Demo balance
+    const { derivDemoTradingService } = await import('./trading/derivDemoTrading.service');
+    let derivInfo = derivDemoTradingService.getAccountInfo();
+    if (!derivInfo.connected) {
+      derivInfo = await derivDemoTradingService.ensureConnected();
+    }
+
+    const isDerivLinked = derivInfo.connected || !!derivInfo.loginId;
+    const balance = isDerivLinked && derivInfo.balance > 0 ? derivInfo.balance : parseFloat(user.demo_balance.toString());
+    const accountType = isDerivLinked && derivInfo.loginId ? `Deriv Demo (${derivInfo.loginId})` : user.account_type;
+
+    // Sync to DB
+    if (isDerivLinked && derivInfo.balance > 0) {
+      await pool.query('UPDATE users SET demo_balance = ? WHERE id = ?', [balance, user.id]);
+    }
+
     return {
       token,
       user: {
@@ -69,8 +85,8 @@ export class AuthService {
         name: user.name,
         email: user.email,
         mobile: user.mobile,
-        demoBalance: parseFloat(user.demo_balance.toString()),
-        accountType: user.account_type,
+        demoBalance: balance,
+        accountType: accountType,
         isDemoMode: true
       }
     };
@@ -85,11 +101,19 @@ export class AuthService {
 
     // Check if Deriv Demo account is linked
     const { derivDemoTradingService } = await import('./trading/derivDemoTrading.service');
-    const derivInfo = derivDemoTradingService.getAccountInfo();
+    let derivInfo = derivDemoTradingService.getAccountInfo();
+    if (!derivInfo.connected) {
+      derivInfo = await derivDemoTradingService.ensureConnected();
+    }
 
     const isDerivLinked = derivInfo.connected || !!derivInfo.loginId;
     const balance = isDerivLinked && derivInfo.balance > 0 ? derivInfo.balance : parseFloat(user.demo_balance.toString());
     const accountType = isDerivLinked && derivInfo.loginId ? `Deriv Demo (${derivInfo.loginId})` : user.account_type;
+
+    // Sync to DB
+    if (isDerivLinked && derivInfo.balance > 0) {
+      await pool.query('UPDATE users SET demo_balance = ? WHERE id = ?', [balance, user.id]);
+    }
 
     return {
       id: user.id,
