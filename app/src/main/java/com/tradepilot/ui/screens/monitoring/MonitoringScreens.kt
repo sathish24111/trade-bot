@@ -208,13 +208,13 @@ fun LiveMonitorTab() {
                     ) {
                         Column {
                             Text(
-                                text = "₹50,240.50",
+                                text = "$50,240.50",
                                 color = TextPrimary,
                                 fontSize = 26.sp,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "+₹240.50 (+0.48%)",
+                                text = "+$240.50 (+0.48%)",
                                 color = TradeProfit,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
@@ -245,8 +245,8 @@ fun LiveMonitorTab() {
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-                MetricCard(Modifier.weight(1f), "Daily P&L", "₹320.00", TradeProfit, "3 Trades")
-                MetricCard(Modifier.weight(1f), "Drawdown", "1.2%", TextSecondary, "Peak ₹10,320")
+                MetricCard(Modifier.weight(1f), "Daily P&L", "$320.00", TradeProfit, "3 Trades")
+                MetricCard(Modifier.weight(1f), "Drawdown", "1.2%", TextSecondary, "Peak $10,320")
             }
         }
 
@@ -275,10 +275,10 @@ fun LiveMonitorTab() {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text("BTC/USD Long (EMA_RSI)", color = TextPrimary, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                        Text("+₹45.00 (+0.9%)", color = TradeProfit, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        Text("+$45.00 (+0.9%)", color = TradeProfit, fontSize = 14.sp, fontWeight = FontWeight.Bold)
                     }
                     Spacer(modifier = Modifier.height(4.dp))
-                    Text("Entry: ₹50,000.00 | Size: ₹1,500.00 | SL: ₹49,500.00", color = TextMuted, fontSize = 11.sp)
+                    Text("Entry: $50,000.00 | Size: $1,500.00 | SL: $49,500.00", color = TextMuted, fontSize = 11.sp)
                 }
             }
         }
@@ -411,7 +411,7 @@ fun RiskDashboardTab() {
                         trackColor = DarkBorder
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text("Daily Loss: ₹160 / ₹500 (Limit: 5%)", color = TextMuted, fontSize = 12.sp)
+                    Text("Daily Loss: $160 / $500 (Limit: 5%)", color = TextMuted, fontSize = 12.sp)
                 }
             }
         }

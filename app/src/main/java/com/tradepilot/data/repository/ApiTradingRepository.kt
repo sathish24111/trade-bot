@@ -57,11 +57,18 @@ class ApiTradingRepository(
                             winRate = event.winRate ?: _botSessionState.value.winRate,
                             sessionLogs = event.logs ?: _botSessionState.value.sessionLogs
                         )
+                        if (event.balance != null && event.balance > 0) {
+                            _demoBalance.value = event.balance
+                            preferencesManager.updateBalance(event.balance)
+                        }
                     }
                     "PNL_UPDATE" -> {
                         if (event.currentPnL != null) {
                             _botSessionState.value = _botSessionState.value.copy(currentPnL = event.currentPnL)
-                            if (event.pnlChange != null) {
+                            if (event.balance != null && event.balance > 0) {
+                                _demoBalance.value = event.balance
+                                preferencesManager.updateBalance(event.balance)
+                            } else if (event.pnlChange != null) {
                                 val newBal = (_demoBalance.value + event.pnlChange).coerceAtLeast(0.0)
                                 _demoBalance.value = newBal
                                 preferencesManager.updateBalance(newBal)
@@ -73,6 +80,11 @@ class ApiTradingRepository(
                             lifecycleState = BotLifecycleState.COMPLETED,
                             terminationReason = event.message ?: "Trading session completed."
                         )
+                        val endBal = event.endingBalance ?: event.balance
+                        if (endBal != null && endBal > 0) {
+                            _demoBalance.value = endBal
+                            preferencesManager.updateBalance(endBal)
+                        }
                     }
                     "RISK_ALERT" -> {
                         _botSessionState.value = _botSessionState.value.copy(

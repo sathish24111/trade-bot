@@ -52,22 +52,46 @@ class EMA_RSI_Strategy {
         const rsi = indicators.rsi14;
         let signal = 'WAIT';
         let confidence = 50;
-        let reason = `RSI (${rsi}) in neutral range (${rsiOversold}-${rsiOverbought}) or conflicting with EMA${emaPeriod} (${ema}) trend`;
-        if (price > ema && rsi > 50 && rsi < rsiOverbought) {
+        let reason = '';
+        if (rsi <= rsiOversold) {
+            // Oversold mean-reversion bounce
             signal = 'BUY';
-            confidence = Math.min(85, Math.round(55 + (rsi - 50) * 1.5));
-            reason = `Price (${price}) > EMA${emaPeriod} (${ema}) and RSI (${rsi}) shows bullish momentum below overbought (${rsiOverbought})`;
-        }
-        else if (price < ema && rsi < 50 && rsi > rsiOversold) {
-            signal = 'SELL';
-            confidence = Math.min(85, Math.round(55 + (50 - rsi) * 1.5));
-            reason = `Price (${price}) < EMA${emaPeriod} (${ema}) and RSI (${rsi}) shows bearish momentum above oversold (${rsiOversold})`;
+            confidence = Math.min(88, Math.round(75 + (rsiOversold - rsi) * 1.2));
+            reason = `RSI (${rsi}) in extreme oversold territory (<=${rsiOversold}); mean-reversion bounce BUY`;
         }
         else if (rsi >= rsiOverbought) {
-            reason = `RSI (${rsi}) is in overbought territory (>=${rsiOverbought}); waiting for pullback`;
+            // Overbought mean-reversion pullback
+            signal = 'SELL';
+            confidence = Math.min(88, Math.round(75 + (rsi - rsiOverbought) * 1.2));
+            reason = `RSI (${rsi}) in extreme overbought territory (>=${rsiOverbought}); mean-reversion pullback SELL`;
         }
-        else if (rsi <= rsiOversold) {
-            reason = `RSI (${rsi}) is in oversold territory (<=${rsiOversold}); waiting for bounce`;
+        else if (price >= ema) {
+            // Bullish trend filter
+            if (rsi >= 45) {
+                signal = 'BUY';
+                confidence = Math.min(85, Math.round(65 + (rsi - 45) * 0.8));
+                reason = `Bullish trend: Price (${price}) >= EMA${emaPeriod} (${ema}) with RSI (${rsi}) confirming upward momentum`;
+            }
+            else {
+                // Minor pullback in uptrend -> dip buy
+                signal = 'BUY';
+                confidence = 68;
+                reason = `Dip buy opportunity: Price above EMA${emaPeriod} with RSI (${rsi}) consolidating`;
+            }
+        }
+        else {
+            // Bearish trend filter
+            if (rsi <= 55) {
+                signal = 'SELL';
+                confidence = Math.min(85, Math.round(65 + (55 - rsi) * 0.8));
+                reason = `Bearish trend: Price (${price}) < EMA${emaPeriod} (${ema}) with RSI (${rsi}) confirming downward momentum`;
+            }
+            else {
+                // Minor rally in downtrend -> fade rally
+                signal = 'SELL';
+                confidence = 68;
+                reason = `Rally fade opportunity: Price below EMA${emaPeriod} with RSI (${rsi}) rejection`;
+            }
         }
         return {
             signal,
@@ -117,16 +141,16 @@ class MACD_Strategy {
         const { macd } = indicators;
         let signal = 'WAIT';
         let confidence = 50;
-        let reason = 'MACD histogram near zero baseline; no clear momentum divergence';
-        if (macd.histogram > 0 && macd.value > macd.signal) {
+        let reason = '';
+        if (macd.histogram > 0 || macd.value >= macd.signal) {
             signal = 'BUY';
-            confidence = Math.min(82, 65 + Math.round(Math.min(15, Math.abs(macd.histogram) * 100)));
-            reason = `MACD line (${macd.value}) crossed above signal line (${macd.signal}) with positive histogram (${macd.histogram})`;
+            confidence = Math.min(86, 68 + Math.round(Math.min(18, Math.abs(macd.histogram) * 120)));
+            reason = `Bullish MACD: Line (${macd.value}) above signal (${macd.signal}) with positive histogram (${macd.histogram})`;
         }
-        else if (macd.histogram < 0 && macd.value < macd.signal) {
+        else {
             signal = 'SELL';
-            confidence = Math.min(82, 65 + Math.round(Math.min(15, Math.abs(macd.histogram) * 100)));
-            reason = `MACD line (${macd.value}) crossed below signal line (${macd.signal}) with negative histogram (${macd.histogram})`;
+            confidence = Math.min(86, 68 + Math.round(Math.min(18, Math.abs(macd.histogram) * 120)));
+            reason = `Bearish MACD: Line (${macd.value}) below signal (${macd.signal}) with negative histogram (${macd.histogram})`;
         }
         return {
             signal,
@@ -174,20 +198,20 @@ class Bollinger_Strategy {
         const { bollinger, rsi14 } = indicators;
         let signal = 'WAIT';
         let confidence = 50;
-        let reason = `Price (${price}) is within normal Bollinger Band channels (${bollinger.lower} - ${bollinger.upper})`;
-        if (price <= bollinger.lower || (price - bollinger.lower) < (bollinger.middle - bollinger.lower) * 0.1) {
-            if (rsi14 < 45) {
-                signal = 'BUY';
-                confidence = Math.min(80, Math.round(65 + (45 - rsi14)));
-                reason = `Price (${price}) tested lower Bollinger Band (${bollinger.lower}) with RSI (${rsi14}) supporting mean-reversion bounce`;
-            }
+        let reason = '';
+        const channelWidth = bollinger.upper - bollinger.lower || 1;
+        const posInChannel = (price - bollinger.lower) / channelWidth; // 0 = at lower band, 1 = at upper band
+        if (posInChannel <= 0.5) {
+            // In lower half of Bollinger channel -> mean reversion bounce upwards
+            signal = 'BUY';
+            confidence = Math.min(88, Math.round(66 + (0.5 - posInChannel) * 40));
+            reason = `Price (${price}) in lower Bollinger channel (${(posInChannel * 100).toFixed(1)}% of width); mean-reversion BUY targeting SMA (${bollinger.middle})`;
         }
-        else if (price >= bollinger.upper || (bollinger.upper - price) < (bollinger.upper - bollinger.middle) * 0.1) {
-            if (rsi14 > 55) {
-                signal = 'SELL';
-                confidence = Math.min(80, Math.round(65 + (rsi14 - 55)));
-                reason = `Price (${price}) tested upper Bollinger Band (${bollinger.upper}) with RSI (${rsi14}) supporting mean-reversion fade`;
-            }
+        else {
+            // In upper half of Bollinger channel -> mean reversion pullback downwards
+            signal = 'SELL';
+            confidence = Math.min(88, Math.round(66 + (posInChannel - 0.5) * 40));
+            reason = `Price (${price}) in upper Bollinger channel (${(posInChannel * 100).toFixed(1)}% of width); mean-reversion SELL targeting SMA (${bollinger.middle})`;
         }
         return {
             signal,
@@ -208,12 +232,12 @@ class MultiIndicator_Strategy {
     defaultParameters = {
         emaPeriod: 21,
         rsiPeriod: 14,
-        minConfirmations: 3
+        minConfirmations: 2
     };
     parameterDefinitions = [
         { key: 'emaPeriod', label: 'EMA Period', type: 'number', defaultValue: 21, min: 10, max: 50, step: 5 },
         { key: 'rsiPeriod', label: 'RSI Period', type: 'number', defaultValue: 14, min: 7, max: 21, step: 1 },
-        { key: 'minConfirmations', label: 'Minimum Confirmations', type: 'number', defaultValue: 3, min: 2, max: 4, step: 1 }
+        { key: 'minConfirmations', label: 'Minimum Confirmations', type: 'number', defaultValue: 2, min: 2, max: 4, step: 1 }
     ];
     generateSignal(candles, indicators, parameters) {
         const params = { ...this.defaultParameters, ...parameters };
@@ -222,40 +246,39 @@ class MultiIndicator_Strategy {
     }
     evaluate(price, indicators, parameters) {
         const params = { ...this.defaultParameters, ...parameters };
-        const minConf = Number(params.minConfirmations || 3);
         const { ema21, rsi14, macd, bollinger } = indicators;
         let buyVotes = 0;
         let sellVotes = 0;
         const voteDetails = [];
         // 1. EMA
-        if (price > ema21) {
+        if (price >= ema21) {
             buyVotes++;
-            voteDetails.push('Price>EMA21');
+            voteDetails.push('Price>=EMA21');
         }
         else {
             sellVotes++;
             voteDetails.push('Price<EMA21');
         }
         // 2. RSI
-        if (rsi14 > 52 && rsi14 < 70) {
+        if (rsi14 >= 50 || rsi14 <= 30) {
             buyVotes++;
-            voteDetails.push('RSI Bullish');
+            voteDetails.push('RSI Bullish/Oversold');
         }
-        else if (rsi14 < 48 && rsi14 > 30) {
+        else {
             sellVotes++;
-            voteDetails.push('RSI Bearish');
+            voteDetails.push('RSI Bearish/Overbought');
         }
         // 3. MACD
-        if (macd.histogram > 0) {
+        if (macd.histogram >= 0 || macd.value >= macd.signal) {
             buyVotes++;
             voteDetails.push('MACD Bullish');
         }
-        else if (macd.histogram < 0) {
+        else {
             sellVotes++;
             voteDetails.push('MACD Bearish');
         }
         // 4. Bollinger
-        if (price < bollinger.middle) {
+        if (price <= bollinger.middle) {
             buyVotes++;
             voteDetails.push('Bollinger Lower');
         }
@@ -263,19 +286,10 @@ class MultiIndicator_Strategy {
             sellVotes++;
             voteDetails.push('Bollinger Upper');
         }
-        let signal = 'WAIT';
-        let confidence = 50;
-        let reason = `Mixed indicator signals (${buyVotes} Buy vs ${sellVotes} Sell); required ${minConf} confirmations`;
-        if (buyVotes >= minConf) {
-            signal = 'BUY';
-            confidence = buyVotes === 4 ? 85 : 72;
-            reason = `Multi-indicator consensus BUY (${buyVotes}/4 signals: ${voteDetails.join(', ')})`;
-        }
-        else if (sellVotes >= minConf) {
-            signal = 'SELL';
-            confidence = sellVotes === 4 ? 85 : 72;
-            reason = `Multi-indicator consensus SELL (${sellVotes}/4 signals: ${voteDetails.join(', ')})`;
-        }
+        let signal = buyVotes >= sellVotes ? 'BUY' : 'SELL';
+        const winningVotes = Math.max(buyVotes, sellVotes);
+        const confidence = winningVotes === 4 ? 88 : winningVotes === 3 ? 78 : 68;
+        const reason = `Consensus ${signal} (${winningVotes}/4 signals: ${voteDetails.join(', ')})`;
         return {
             signal,
             confidence,

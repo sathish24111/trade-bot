@@ -19,14 +19,14 @@ class InvestmentValidationTest {
     fun testZeroInvestmentReturnsError() {
         val error = TradingSetupViewModel.validateInvestment(0.0, demoBalance)
         assertNotNull(error)
-        assertTrue(error!!.contains("greater than ₹0"))
+        assertTrue(error!!.contains("greater than $0"))
     }
 
     @Test
     fun testNegativeInvestmentReturnsError() {
         val error = TradingSetupViewModel.validateInvestment(-50.0, demoBalance)
         assertNotNull(error)
-        assertTrue(error!!.contains("greater than ₹0"))
+        assertTrue(error!!.contains("greater than $0"))
     }
 
     @Test

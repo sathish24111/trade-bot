@@ -55,7 +55,7 @@ fun TradingSetupScreen(
                 SectionCard(title = "Investment Amount") {
                     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                         Text(
-                            text = "Available Demo Balance: ₹${String.format(java.util.Locale.US, "%,.2f", state.demoBalance)}",
+                            text = "Available Demo Balance: $${String.format(java.util.Locale.US, "%,.2f", state.demoBalance)}",
                             fontSize = 12.sp,
                             color = TextSecondary
                         )
@@ -69,7 +69,7 @@ fun TradingSetupScreen(
                             presets.forEach { preset ->
                                 val isSelected = !state.isCustomSelected && state.investmentAmount == preset
                                 PresetButton(
-                                    label = "₹${preset.toInt()}",
+                                    label = "$${preset.toInt()}",
                                     isSelected = isSelected,
                                     onClick = { viewModel.selectPresetAmount(preset) },
                                     modifier = Modifier.weight(1f)
@@ -81,7 +81,7 @@ fun TradingSetupScreen(
                         TradePilotTextField(
                             value = state.customAmountText,
                             onValueChange = { viewModel.setCustomAmount(it) },
-                            label = "Or Custom Amount (₹)",
+                            label = "Or Custom Amount ($)",
                             placeholder = "Enter custom amount e.g. 750",
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                         )

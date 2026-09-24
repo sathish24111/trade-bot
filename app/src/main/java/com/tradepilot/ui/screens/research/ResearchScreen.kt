@@ -351,7 +351,7 @@ private fun BacktestTabContent(
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         MetricCard(
                             title = "Expectancy",
-                            value = "₹${metrics.expectancy}",
+                            value = "$${metrics.expectancy}",
                             color = if (metrics.expectancy >= 0) TradeGreen else TradeRed,
                             modifier = Modifier.weight(1f)
                         )
@@ -397,7 +397,7 @@ private fun BacktestTabContent(
                             }
                             Column(horizontalAlignment = Alignment.End) {
                                 Text(
-                                    text = "${if (m.netPnl >= 0) "+" else ""}₹${m.netPnl} (${m.returnPercent}%)",
+                                    text = "${if (m.netPnl >= 0) "+" else ""}$${m.netPnl} (${m.returnPercent}%)",
                                     fontSize = 13.sp,
                                     fontWeight = FontWeight.Bold,
                                     color = if (m.netPnl >= 0) TradeGreen else TradeRed
@@ -628,7 +628,7 @@ private fun WalkForwardTabContent(
                         Text(wf.robustnessSummary, fontSize = 11.sp, color = TextSecondary)
                         Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Cumulative Out-Of-Sample P/L: ₹${wf.cumulativeOosPnl} (${wf.cumulativeOosReturnPercent}%)",
+                            "Cumulative Out-Of-Sample P/L: $${wf.cumulativeOosPnl} (${wf.cumulativeOosReturnPercent}%)",
                             fontSize = 12.sp,
                             fontWeight = FontWeight.SemiBold,
                             color = if (wf.cumulativeOosPnl >= 0) TradeGreen else TradeRed
@@ -661,7 +661,7 @@ private fun WalkForwardTabContent(
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                             Text("In-Sample: ${w.inSampleMetrics.returnPercent}%", fontSize = 11.sp, color = TextSecondary)
                             Text(
-                                "Out-Sample: ${w.outOfSampleMetrics.returnPercent}% (₹${w.outOfSampleMetrics.netPnl})",
+                                "Out-Sample: ${w.outOfSampleMetrics.returnPercent}% ($${w.outOfSampleMetrics.netPnl})",
                                 fontSize = 11.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = if (w.outOfSampleMetrics.netPnl >= 0) TradeGreen else TradeRed
@@ -750,11 +750,11 @@ private fun MonteCarloTabContent(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(12.dp)) {
-                        PercentileRow("5th Percentile (Worst-case)", "₹${mc.finalBalanceDistribution.p5}", TradeRed)
-                        PercentileRow("25th Percentile", "₹${mc.finalBalanceDistribution.p25}", TextSecondary)
-                        PercentileRow("Median Expected Balance", "₹${mc.finalBalanceDistribution.median}", TradePrimaryLight, isBold = true)
-                        PercentileRow("75th Percentile", "₹${mc.finalBalanceDistribution.p75}", TextSecondary)
-                        PercentileRow("95th Percentile (Best-case)", "₹${mc.finalBalanceDistribution.p95}", TradeGreen)
+                        PercentileRow("5th Percentile (Worst-case)", "$${mc.finalBalanceDistribution.p5}", TradeRed)
+                        PercentileRow("25th Percentile", "$${mc.finalBalanceDistribution.p25}", TextSecondary)
+                        PercentileRow("Median Expected Balance", "$${mc.finalBalanceDistribution.median}", TradePrimaryLight, isBold = true)
+                        PercentileRow("75th Percentile", "$${mc.finalBalanceDistribution.p75}", TextSecondary)
+                        PercentileRow("95th Percentile (Best-case)", "$${mc.finalBalanceDistribution.p95}", TradeGreen)
                     }
                 }
             }
@@ -894,7 +894,7 @@ private fun RegimesTabContent(
                         Spacer(modifier = Modifier.height(10.dp))
                         HorizontalDivider(color = DarkBorder)
                         Spacer(modifier = Modifier.height(8.dp))
-                        Text("Risk Amount: ₹${ps.riskAmount} (${ps.riskProfile.riskPerTradePercent}%)", fontSize = 12.sp, color = TextSecondary)
+                        Text("Risk Amount: $${ps.riskAmount} (${ps.riskProfile.riskPerTradePercent}%)", fontSize = 12.sp, color = TextSecondary)
                         Text("Stop Loss Distance: ${ps.stopLossDistance} (${ps.stopLossPercent}%)", fontSize = 12.sp, color = TextSecondary)
                         Text("Suggested Position Size: ${ps.suggestedPositionSize} units", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TradePrimaryLight)
                     }
@@ -1149,7 +1149,7 @@ private fun RobustnessTabContent(state: ResearchUiState) {
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Text("${s.costMultiplier}x Fees / Slippage", fontSize = 12.sp, color = TextPrimary, fontWeight = FontWeight.SemiBold)
-                            Text("PnL: ₹${s.netPnl.toInt()}", fontSize = 12.sp, color = if (s.netPnl >= 0) TradeProfit else TradeLoss, fontWeight = FontWeight.Bold)
+                            Text("PnL: $${s.netPnl.toInt()}", fontSize = 12.sp, color = if (s.netPnl >= 0) TradeProfit else TradeLoss, fontWeight = FontWeight.Bold)
                             Text("Win: ${s.winRate}%", fontSize = 12.sp, color = TextMuted)
                             Text("PF: ${s.profitFactor}", fontSize = 12.sp, color = if (s.profitFactor >= 1.0) TradeProfit else TradeLoss)
                         }
@@ -1261,11 +1261,11 @@ private fun ExperimentsTabContent(state: ResearchUiState) {
                     ) {
                         Column {
                             Text("Current Equity", fontSize = 11.sp, color = TextMuted)
-                            Text("₹${exp.currentBalance.toInt()}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Text("$${exp.currentBalance.toInt()}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                         }
                         Column {
                             Text("Paper PnL", fontSize = 11.sp, color = TextMuted)
-                            Text("+₹${exp.pnl.toInt()}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
+                            Text("+$${exp.pnl.toInt()}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
                         }
                         Column {
                             Text("Trades (Win%)", fontSize = 11.sp, color = TextMuted)

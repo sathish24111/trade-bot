@@ -165,14 +165,18 @@ export class PaperExecutionEngine {
       // 1. Advance simulated market data
       marketService.tick();
 
-      // 2. Evaluate Strategy & Risk every 5 simulated seconds
-      if (activeState.elapsedSeconds > 0 && activeState.elapsedSeconds % 5 === 0) {
+      // 2. Evaluate Strategy & Risk every 3 simulated seconds (or immediately at second 2 for first trade)
+      if (activeState.elapsedSeconds > 0 && (activeState.elapsedSeconds % 3 === 0 || (activeState.tradesCount === 0 && activeState.elapsedSeconds >= 2))) {
         await this.executePaperCycle(sessionId);
       }
 
       const winRate = activeState.tradesCount > 0
         ? Math.round((activeState.winCount / activeState.tradesCount) * 1000) / 10
         : 0;
+
+      const currentBal = derivDemoTradingService.getAccountInfo().connected && derivDemoTradingService.getAccountInfo().balance > 0
+        ? derivDemoTradingService.getAccountInfo().balance
+        : activeState.session.starting_balance + activeState.session.current_pnl;
 
       // Broadcast BOT_STATUS
       broadcastEvent({
@@ -182,6 +186,7 @@ export class PaperExecutionEngine {
         elapsedSeconds: activeState.elapsedSeconds,
         remainingSeconds: activeState.remainingSeconds,
         currentPnL: activeState.session.current_pnl,
+        balance: currentBal,
         tradesCount: activeState.tradesCount,
         winRate,
         logs: activeState.logs.slice(-15),
@@ -306,7 +311,7 @@ export class PaperExecutionEngine {
             ]
           );
 
-          const derivBal = parseFloat(result.balanceAfter);
+          const derivBal = parseFloat((parseFloat(result.balanceAfter) + (isWin ? proposal.payout : 0)).toFixed(2));
           derivDemoTradingService.getAccountInfo().balance = derivBal;
 
           await pool.query(
@@ -336,7 +341,8 @@ export class PaperExecutionEngine {
             type: 'PNL_UPDATE',
             sessionId,
             currentPnL: session.current_pnl,
-            pnlChange: pnl
+            pnlChange: pnl,
+            balance: derivBal
           });
 
           return;
@@ -398,6 +404,9 @@ export class PaperExecutionEngine {
         [pnl, session.user_id]
       );
 
+      const [userBalRows]: any = await pool.query('SELECT demo_balance FROM users WHERE id = ?', [session.user_id]);
+      const currentDbBal = userBalRows.length > 0 ? parseFloat(userBalRows[0].demo_balance) : session.starting_balance + pnl;
+
       // 3. Update session metrics
       active.tradesCount++;
       if (isWin) active.winCount++; else active.lossCount++;
@@ -422,7 +431,8 @@ export class PaperExecutionEngine {
         type: 'PNL_UPDATE',
         sessionId,
         currentPnL: session.current_pnl,
-        pnlChange: pnl
+        pnlChange: pnl,
+        balance: currentDbBal
       });
     }
   }
@@ -487,6 +497,7 @@ export class PaperExecutionEngine {
       sessionId,
       status: 'COMPLETED',
       endingBalance,
+      balance: endingBalance,
       currentPnL: active.session.current_pnl,
       reason,
       logs: active.logs

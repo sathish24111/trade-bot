@@ -323,7 +323,7 @@ fun BacktestScreen(
                                 OutlinedTextField(
                                     value = initialBalance,
                                     onValueChange = { viewModel.setInitialBalance(it) },
-                                    label = { Text("Initial Demo Balance (₹)") },
+                                    label = { Text("Initial Demo Balance ($)") },
                                     modifier = Modifier.fillMaxWidth(),
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = TradeGreen,
@@ -545,7 +545,7 @@ fun BacktestResultCard(res: BacktestResultDto) {
             ) {
                 MetricItem(
                     label = "Total P/L",
-                    value = String.format(Locale.US, "%s₹%.2f", if (res.totalPnl >= 0) "+" else "", res.totalPnl),
+                    value = String.format(Locale.US, "%s$%.2f", if (res.totalPnl >= 0) "+" else "", res.totalPnl),
                     color = if (res.totalPnl >= 0) TradeGreen else TradeRed,
                     modifier = Modifier.weight(1f)
                 )
@@ -587,7 +587,7 @@ fun BacktestResultCard(res: BacktestResultDto) {
                 )
                 MetricItem(
                     label = "Final Balance",
-                    value = String.format(Locale.US, "₹%.2f", res.finalBalance),
+                    value = String.format(Locale.US, "$%.2f", res.finalBalance),
                     color = TextPrimary,
                     modifier = Modifier.weight(1f)
                 )
@@ -636,7 +636,7 @@ fun StrategyComparisonCard(item: StrategyComparisonItemDto) {
                     fontSize = 14.sp
                 )
                 Text(
-                    text = String.format(Locale.US, "%s₹%.2f", if (item.totalPnl >= 0) "+" else "", item.totalPnl),
+                    text = String.format(Locale.US, "%s$%.2f", if (item.totalPnl >= 0) "+" else "", item.totalPnl),
                     fontWeight = FontWeight.Bold,
                     color = if (item.totalPnl >= 0) TradeGreen else TradeRed,
                     fontSize = 14.sp
@@ -705,7 +705,7 @@ fun TradeHistoryItem(trade: BacktestTradeDto) {
 
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    text = String.format(Locale.US, "%s₹%.2f", if (trade.pnl >= 0) "+" else "", trade.pnl),
+                    text = String.format(Locale.US, "%s$%.2f", if (trade.pnl >= 0) "+" else "", trade.pnl),
                     fontWeight = FontWeight.Bold,
                     color = if (trade.pnl >= 0) TradeGreen else TradeRed,
                     fontSize = 13.sp

@@ -235,7 +235,7 @@ fun LiveMarketScreen(
 
                         Column(horizontalAlignment = Alignment.End) {
                             Text(
-                                "₹${String.format("%,.2f", asset.price)}",
+                                "$${String.format("%,.2f", asset.price)}",
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 16.sp

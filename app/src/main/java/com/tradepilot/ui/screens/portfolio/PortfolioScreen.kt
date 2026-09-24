@@ -124,7 +124,7 @@ fun PortfolioScreen() {
                         val retPct = (netPnl / initialCapital) * 100.0
 
                         Text(
-                            text = "₹${String.format(Locale.US, "%,.2f", currentEquity)}",
+                            text = "$${String.format(Locale.US, "%,.2f", currentEquity)}",
                             fontSize = 28.sp,
                             fontWeight = FontWeight.Bold,
                             color = TextPrimary
@@ -141,7 +141,7 @@ fun PortfolioScreen() {
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "${if (netPnl >= 0) "+" else ""}₹${String.format(Locale.US, "%.2f", netPnl)} (${String.format(Locale.US, "%+.2f", retPct)}%)",
+                                text = "${if (netPnl >= 0) "+" else ""}$${String.format(Locale.US, "%.2f", netPnl)} (${String.format(Locale.US, "%+.2f", retPct)}%)",
                                 color = if (netPnl >= 0) TradeProfit else TradeLoss,
                                 fontWeight = FontWeight.SemiBold,
                                 fontSize = 13.sp
@@ -158,7 +158,7 @@ fun PortfolioScreen() {
                         ) {
                             Column {
                                 Text("Initial Capital", fontSize = 11.sp, color = TextMuted)
-                                Text("₹${String.format(Locale.US, "%,.0f", initialCapital)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text("$${String.format(Locale.US, "%,.0f", initialCapital)}", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
                             }
                             Column {
                                 Text("Max Drawdown", fontSize = 11.sp, color = TextMuted)
@@ -246,7 +246,7 @@ fun PortfolioScreen() {
                                 }
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text("${alloc.weightPercent.toInt()}%", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
-                                    Text("₹${alloc.allocatedCapital.toInt()}", fontSize = 11.sp, color = TextMuted)
+                                    Text("$${alloc.allocatedCapital.toInt()}", fontSize = 11.sp, color = TextMuted)
                                 }
                             }
                         }

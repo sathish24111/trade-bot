@@ -230,7 +230,9 @@ data class WsEventDto(
     val logs: List<String>?,
     val trade: TradeDto?,
     val message: String?,
-    val timestamp: String?
+    val timestamp: String?,
+    val balance: Double? = null,
+    val endingBalance: Double? = null
 )
 
 // Phase 3: Backtest & Market Analysis DTOs

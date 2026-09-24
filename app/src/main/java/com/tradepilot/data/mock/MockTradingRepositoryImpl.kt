@@ -45,7 +45,7 @@ class MockTradingRepositoryImpl(
 
         // Validate investment amount
         if (config.investmentAmount <= 0) {
-            return Result.failure(IllegalArgumentException("Investment amount must be greater than ₹0."))
+            return Result.failure(IllegalArgumentException("Investment amount must be greater than $0."))
         }
         if (config.investmentAmount > _demoBalance.value) {
             return Result.failure(IllegalArgumentException("Investment amount exceeds available demo balance."))
@@ -66,7 +66,7 @@ class MockTradingRepositoryImpl(
             sessionLogs = listOf(
                 "[${currentTimeString()}] Initializing ${config.strategy.displayName} engine in DEMO MODE...",
                 "[${currentTimeString()}] Risk profile: ${config.riskLevel.displayName} (Max ${((config.riskLevel.maxRiskPerTradePercent * 100).toInt())}% per trade)",
-                "[${currentTimeString()}] Daily loss protection active (Limit: ₹${RiskLimits.calculateMaxLossThreshold().toInt()})"
+                "[${currentTimeString()}] Daily loss protection active (Limit: $${RiskLimits.calculateMaxLossThreshold().toInt()})"
             )
         )
 
@@ -154,7 +154,7 @@ class MockTradingRepositoryImpl(
                 // Record into performance history
                 performanceRepository.recordSimulatedTrade(simulatedTrade)
 
-                val outcomeTag = if (isWin) "+₹${String.format(Locale.US, "%.2f", tradePnl)}" else "-₹${String.format(Locale.US, "%.2f", -tradePnl)}"
+                val outcomeTag = if (isWin) "+$${String.format(Locale.US, "%.2f", tradePnl)}" else "-$${String.format(Locale.US, "%.2f", -tradePnl)}"
                 currentLogs.add(
                     0,
                     "[${currentTimeString()}] ${direction.name} ${asset.symbol} completed: $outcomeTag (${if (isWin) "WIN" else "LOSS"})"

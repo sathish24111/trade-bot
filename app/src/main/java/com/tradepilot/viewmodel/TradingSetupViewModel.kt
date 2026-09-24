@@ -118,8 +118,8 @@ class TradingSetupViewModel(
     companion object {
         fun validateInvestment(amount: Double, balance: Double): String? {
             return when {
-                amount <= 0.0 -> "Investment amount must be greater than ₹0."
-                amount > balance -> "Investment amount cannot exceed demo balance (₹${String.format(java.util.Locale.US, "%,.2f", balance)})."
+                amount <= 0.0 -> "Investment amount must be greater than $0."
+                amount > balance -> "Investment amount cannot exceed demo balance ($${String.format(java.util.Locale.US, "%,.2f", balance)})."
                 else -> null
             }
         }
