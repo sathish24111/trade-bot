@@ -1537,3 +1537,100 @@ export async function listWeeklyResearchReports(req: AuthRequest, res: Response)
   }
 }
 
+// ==========================================
+// STRATEGY V2: QUALITY-FIRST ADAPTIVE ENGINE
+// ==========================================
+
+export async function evaluateStrategyV2Signal(req: AuthRequest, res: Response) {
+  try {
+    const { strategyV2Service } = await import('../services/strategy/strategyV2.service');
+    const { derivMarketProvider } = await import('../services/market/derivMarket.provider');
+    const { marketService } = await import('../services/market.service');
+
+    let candles = req.body.candles;
+    const symbol = req.body.symbol || 'R_100';
+
+    if (!candles || candles.length === 0) {
+      candles = await derivMarketProvider.getCandles(symbol, '1m', 50);
+      if (!candles || candles.length < 20) {
+        candles = await marketService.getCandles(symbol, '1m', 50);
+      }
+    }
+
+    const result = strategyV2Service.evaluateSignal(candles, req.body.indicators, req.body.parameters);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      signalResult: result
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+}
+
+export async function compareStrategyV1VsV2(req: AuthRequest, res: Response) {
+  try {
+    const { strategyV2ComparisonService } = await import('../services/research/strategyV2Comparison.service');
+    const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+    const symbol = req.query.symbol as string;
+
+    const comparison = await strategyV2ComparisonService.compareV1VsV2(userId, symbol);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      comparison
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function validateStrategyV2Oos(req: AuthRequest, res: Response) {
+  try {
+    const { outOfSampleValidationService } = await import('../services/research/outOfSampleValidation.service');
+    const { derivMarketProvider } = await import('../services/market/derivMarket.provider');
+    const { marketService } = await import('../services/market.service');
+
+    let candles = req.body.candles;
+    const symbol = req.body.symbol || 'R_100';
+
+    if (!candles || candles.length < 50) {
+      candles = await derivMarketProvider.getCandles(symbol, '1m', 300);
+      if (!candles || candles.length < 50) {
+        candles = await marketService.getCandles(symbol, '1m', 300);
+      }
+    }
+
+    const report = outOfSampleValidationService.runValidation(candles, req.body.parameters);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      report
+    });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2Journal(req: AuthRequest, res: Response) {
+  try {
+    const { paperJournalService } = await import('../services/research/paperJournal.service');
+    const entries = await paperJournalService.getJournalEntries({
+      strategyVersion: req.query.strategyVersion as string,
+      userId: req.user?.userId,
+      symbol: req.query.symbol as string,
+      regime: req.query.regime as string,
+      limit: req.query.limit ? Number(req.query.limit) : 100
+    });
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      entries,
+      total: entries.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+

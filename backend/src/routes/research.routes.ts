@@ -73,13 +73,24 @@ import {
   generateDailyResearchReport,
   generateWeeklyResearchReport,
   listDailyResearchReports,
-  listWeeklyResearchReports
+  listWeeklyResearchReports,
+  evaluateStrategyV2Signal,
+  compareStrategyV1VsV2,
+  validateStrategyV2Oos,
+  getStrategyV2Journal
 } from '../controllers/research.controller';
 
 
 const router = Router();
 
 router.use(authMiddleware);
+
+// Strategy V2: Quality-First Adaptive Paper Engine
+router.post('/strategy-v2/evaluate-signal', evaluateStrategyV2Signal);
+router.get('/strategy-v2/compare', compareStrategyV1VsV2);
+router.post('/strategy-v2/compare', compareStrategyV1VsV2);
+router.post('/strategy-v2/validate-oos', validateStrategyV2Oos);
+router.get('/strategy-v2/journal', getStrategyV2Journal);
 
 // Advanced backtest & analytics
 router.post('/backtest', runResearchBacktest);

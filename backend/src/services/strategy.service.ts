@@ -1,5 +1,6 @@
 import { MarketAsset, TechnicalIndicators, Candle } from '../models/MarketData';
 import { indicatorService } from './indicator.service';
+import { strategyV2Service } from './strategy/strategyV2.service';
 
 export interface StrategyParameters {
   [key: string]: number | boolean | string;
@@ -417,6 +418,72 @@ export class MultiIndicator_Strategy implements TradingStrategy {
   }
 }
 
+// 5. Strategy V2 - Quality-First Adaptive Strategy
+export class StrategyV2_Strategy implements TradingStrategy {
+  id = 'STRATEGY_V2';
+  name = 'STRATEGY_V2';
+  description = 'Quality-First Adaptive Strategy with 0-100 normalized quality score, 6-state regime filter, and multi-indicator confirmation';
+
+  defaultParameters: StrategyParameters = {
+    minSignalScore: 80,
+    cooldownSeconds: 30,
+    minConfirmations: 3,
+    minPriceMovement: 0.0002,
+    rsiOversold: 30,
+    rsiOverbought: 70
+  };
+
+  parameterDefinitions: ParameterDefinition[] = [
+    { key: 'minSignalScore', label: 'Minimum Signal Score', type: 'number', defaultValue: 80, min: 60, max: 95, step: 5 },
+    { key: 'cooldownSeconds', label: 'Cooldown Period (Seconds)', type: 'number', defaultValue: 30, min: 10, max: 120, step: 5 },
+    { key: 'minConfirmations', label: 'Minimum Indicator Confirmations', type: 'number', defaultValue: 3, min: 2, max: 5, step: 1 },
+    { key: 'minPriceMovement', label: 'Min Price Movement (%)', type: 'number', defaultValue: 0.0002, min: 0.0001, max: 0.005, step: 0.0001 }
+  ];
+
+  generateSignal(
+    candles: Candle[],
+    indicators: TechnicalIndicators,
+    parameters?: StrategyParameters
+  ): StrategySignalResult {
+    const v2Result = strategyV2Service.evaluateSignal(candles, indicators, parameters as any);
+    return {
+      signal: v2Result.signal,
+      confidence: v2Result.score,
+      reason: `[Regime: ${v2Result.regime}, Score: ${v2Result.score}/100, ${v2Result.scoreBreakdown.confirmationsCount} confirmations] ${v2Result.reasons.slice(0, 2).join('; ')}`,
+      indicators: v2Result.indicators,
+      disclaimer: v2Result.disclaimer,
+      parametersUsed: parameters
+    };
+  }
+
+  evaluate(
+    price: number,
+    indicators: TechnicalIndicators,
+    parameters?: StrategyParameters
+  ): StrategySignalResult {
+    // Single point evaluation creates a synthetic candle context
+    const syntheticCandles: Candle[] = [
+      {
+        timestamp: Date.now() - 120000,
+        open: price * 0.999,
+        high: price * 1.001,
+        low: price * 0.998,
+        close: price * 0.9995,
+        volume: 100
+      },
+      {
+        timestamp: Date.now() - 60000,
+        open: price * 0.9995,
+        high: price * 1.0015,
+        low: price * 0.999,
+        close: price,
+        volume: 150
+      }
+    ];
+    return this.generateSignal(syntheticCandles, indicators, parameters);
+  }
+}
+
 // Strategy Engine
 export class StrategyEngine {
   private strategies: Map<string, TradingStrategy> = new Map();
@@ -426,6 +493,7 @@ export class StrategyEngine {
     this.register(new MACD_Strategy());
     this.register(new Bollinger_Strategy());
     this.register(new MultiIndicator_Strategy());
+    this.register(new StrategyV2_Strategy());
   }
 
   register(strategy: TradingStrategy) {

@@ -5,6 +5,12 @@ const auth_middleware_1 = require("../middleware/auth.middleware");
 const research_controller_1 = require("../controllers/research.controller");
 const router = (0, express_1.Router)();
 router.use(auth_middleware_1.authMiddleware);
+// Strategy V2: Quality-First Adaptive Paper Engine
+router.post('/strategy-v2/evaluate-signal', research_controller_1.evaluateStrategyV2Signal);
+router.get('/strategy-v2/compare', research_controller_1.compareStrategyV1VsV2);
+router.post('/strategy-v2/compare', research_controller_1.compareStrategyV1VsV2);
+router.post('/strategy-v2/validate-oos', research_controller_1.validateStrategyV2Oos);
+router.get('/strategy-v2/journal', research_controller_1.getStrategyV2Journal);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

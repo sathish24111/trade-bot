@@ -106,6 +106,10 @@ exports.generateDailyResearchReport = generateDailyResearchReport;
 exports.generateWeeklyResearchReport = generateWeeklyResearchReport;
 exports.listDailyResearchReports = listDailyResearchReports;
 exports.listWeeklyResearchReports = listWeeklyResearchReports;
+exports.evaluateStrategyV2Signal = evaluateStrategyV2Signal;
+exports.compareStrategyV1VsV2 = compareStrategyV1VsV2;
+exports.validateStrategyV2Oos = validateStrategyV2Oos;
+exports.getStrategyV2Journal = getStrategyV2Journal;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -1474,6 +1478,94 @@ async function listWeeklyResearchReports(req, res) {
         const { automatedReportService } = await Promise.resolve().then(() => __importStar(require('../services/research/automatedReport.service')));
         const reports = await automatedReportService.getWeeklyReports();
         res.json({ success: true, ...SAFETY_METADATA, reports });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+// ==========================================
+// STRATEGY V2: QUALITY-FIRST ADAPTIVE ENGINE
+// ==========================================
+async function evaluateStrategyV2Signal(req, res) {
+    try {
+        const { strategyV2Service } = await Promise.resolve().then(() => __importStar(require('../services/strategy/strategyV2.service')));
+        const { derivMarketProvider } = await Promise.resolve().then(() => __importStar(require('../services/market/derivMarket.provider')));
+        const { marketService } = await Promise.resolve().then(() => __importStar(require('../services/market.service')));
+        let candles = req.body.candles;
+        const symbol = req.body.symbol || 'R_100';
+        if (!candles || candles.length === 0) {
+            candles = await derivMarketProvider.getCandles(symbol, '1m', 50);
+            if (!candles || candles.length < 20) {
+                candles = await marketService.getCandles(symbol, '1m', 50);
+            }
+        }
+        const result = strategyV2Service.evaluateSignal(candles, req.body.indicators, req.body.parameters);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            signalResult: result
+        });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+}
+async function compareStrategyV1VsV2(req, res) {
+    try {
+        const { strategyV2ComparisonService } = await Promise.resolve().then(() => __importStar(require('../services/research/strategyV2Comparison.service')));
+        const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+        const symbol = req.query.symbol;
+        const comparison = await strategyV2ComparisonService.compareV1VsV2(userId, symbol);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            comparison
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function validateStrategyV2Oos(req, res) {
+    try {
+        const { outOfSampleValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/outOfSampleValidation.service')));
+        const { derivMarketProvider } = await Promise.resolve().then(() => __importStar(require('../services/market/derivMarket.provider')));
+        const { marketService } = await Promise.resolve().then(() => __importStar(require('../services/market.service')));
+        let candles = req.body.candles;
+        const symbol = req.body.symbol || 'R_100';
+        if (!candles || candles.length < 50) {
+            candles = await derivMarketProvider.getCandles(symbol, '1m', 300);
+            if (!candles || candles.length < 50) {
+                candles = await marketService.getCandles(symbol, '1m', 300);
+            }
+        }
+        const report = outOfSampleValidationService.runValidation(candles, req.body.parameters);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            report
+        });
+    }
+    catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2Journal(req, res) {
+    try {
+        const { paperJournalService } = await Promise.resolve().then(() => __importStar(require('../services/research/paperJournal.service')));
+        const entries = await paperJournalService.getJournalEntries({
+            strategyVersion: req.query.strategyVersion,
+            userId: req.user?.userId,
+            symbol: req.query.symbol,
+            regime: req.query.regime,
+            limit: req.query.limit ? Number(req.query.limit) : 100
+        });
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            entries,
+            total: entries.length
+        });
     }
     catch (err) {
         res.status(500).json({ success: false, error: err.message });
