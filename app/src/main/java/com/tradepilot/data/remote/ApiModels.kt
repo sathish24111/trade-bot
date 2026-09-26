@@ -1850,6 +1850,94 @@ data class DailyReportsResponse(
     val brokerConnected: Boolean = false
 )
 
+// Strategy V2 Demo Validation & Loss Analysis DTOs
+data class ResearchCategoryMetricsDto(
+    val category: String = "",
+    val key: String = "",
+    val tradesCount: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val totalPnL: Double = 0.0,
+    val averagePnL: Double = 0.0,
+    val averageWinningTrade: Double = 0.0,
+    val averageLosingTrade: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val maxDrawdown: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val sampleStatus: String = "INSUFFICIENT_SAMPLE",
+    val sampleWarning: String? = null
+)
+
+data class LossClusterPatternDto(
+    val id: String = "",
+    val title: String = "",
+    val condition: String = "",
+    val lossCount: Int = 0,
+    val totalTradesInCondition: Int = 0,
+    val lossRate: Double = 0.0,
+    val impactPnL: Double = 0.0,
+    val severity: String = "LOW",
+    val observation: String = "",
+    val disclaimer: String = ""
+)
+
+data class DiagnosticAlertDto(
+    val id: String = "",
+    val code: String = "",
+    val severity: String = "INFO",
+    val title: String = "",
+    val message: String = "",
+    val category: String = "",
+    val timestamp: Long = 0L
+)
+
+data class StrategyV2OverviewDto(
+    val totalTrades: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val sampleStatus: String = "ADEQUATE"
+)
+
+data class ConsecutiveLossAnalysisDto(
+    val singleLossEvents: Int = 0,
+    val twoConsecutiveLossEvents: Int = 0,
+    val threeConsecutiveLossEvents: Int = 0,
+    val fourPlusConsecutiveLossEvents: Int = 0,
+    val longestLossStreak: Int = 0
+)
+
+data class V2ValidationDashboardDto(
+    val overview: StrategyV2OverviewDto = StrategyV2OverviewDto(),
+    val assetAnalysis: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val regimeAnalysis: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val scoreAnalysis: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val confirmationAnalysis: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val durationAnalysis: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val consecutiveLossAnalysis: ConsecutiveLossAnalysisDto = ConsecutiveLossAnalysisDto(),
+    val lossClusters: List<LossClusterPatternDto> = emptyList(),
+    val v1VsV2Comparison: Map<String, Any>? = null,
+    val oosValidation: Map<String, Any>? = null,
+    val diagnosticAlerts: List<DiagnosticAlertDto> = emptyList(),
+    val disclaimer: String = ""
+)
+
+data class V2ValidationDashboardResponse(
+    val success: Boolean,
+    val validationDashboard: V2ValidationDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+
 
 
 

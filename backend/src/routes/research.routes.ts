@@ -77,7 +77,12 @@ import {
   evaluateStrategyV2Signal,
   compareStrategyV1VsV2,
   validateStrategyV2Oos,
-  getStrategyV2Journal
+  getStrategyV2Journal,
+  getStrategyV2LossAnalysis,
+  getStrategyV2LossClusters,
+  getStrategyV2DiagnosticAlerts,
+  getStrategyV2ValidationReport,
+  collectDemoTrades
 } from '../controllers/research.controller';
 
 
@@ -85,12 +90,17 @@ const router = Router();
 
 router.use(authMiddleware);
 
-// Strategy V2: Quality-First Adaptive Paper Engine
+// Strategy V2: Quality-First Adaptive Paper Engine & Loss Analysis
 router.post('/strategy-v2/evaluate-signal', evaluateStrategyV2Signal);
 router.get('/strategy-v2/compare', compareStrategyV1VsV2);
 router.post('/strategy-v2/compare', compareStrategyV1VsV2);
 router.post('/strategy-v2/validate-oos', validateStrategyV2Oos);
 router.get('/strategy-v2/journal', getStrategyV2Journal);
+router.get('/strategy-v2/loss-analysis', getStrategyV2LossAnalysis);
+router.get('/strategy-v2/loss-clusters', getStrategyV2LossClusters);
+router.get('/strategy-v2/diagnostic-alerts', getStrategyV2DiagnosticAlerts);
+router.get('/strategy-v2/validation-dashboard', getStrategyV2ValidationReport);
+router.post('/strategy-v2/collect-demo-trades', collectDemoTrades);
 
 // Advanced backtest & analytics
 router.post('/backtest', runResearchBacktest);

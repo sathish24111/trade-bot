@@ -363,6 +363,13 @@ interface ApiService {
 
     @GET("api/research/reports/daily")
     suspend fun getDailyResearchReports(): Response<DailyReportsResponse>
+
+    // Strategy V2 Demo Validation & Loss Analysis
+    @GET("api/research/strategy-v2/validation-dashboard")
+    suspend fun getV2ValidationDashboard(
+        @Query("symbol") symbol: String = "R_100"
+    ): Response<V2ValidationDashboardResponse>
 }
+
 
 

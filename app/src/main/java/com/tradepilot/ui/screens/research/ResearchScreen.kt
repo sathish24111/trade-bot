@@ -217,6 +217,7 @@ fun ResearchScreen(
                 }
             } else {
                 when (state.selectedTab) {
+                    ResearchTab.V2_VALIDATION -> V2ValidationTabContent(state, onRefresh = { viewModel.loadV2ValidationDashboard() })
                     ResearchTab.BACKTEST -> BacktestTabContent(state, onRun = { viewModel.runBacktest() })
                     ResearchTab.OPTIMIZE -> OptimizeTabContent(state, onRun = { viewModel.runOptimization() })
                     ResearchTab.WALK_FORWARD -> WalkForwardTabContent(state, onRun = { viewModel.runWalkForward() })
@@ -1304,3 +1305,211 @@ private fun ExperimentsTabContent(state: ResearchUiState) {
         }
     }
 }
+
+// -------------------------------------------------------------
+// TAB: V2 DEMO VALIDATION & LOSS ANALYSIS DASHBOARD
+// -------------------------------------------------------------
+@Composable
+private fun V2ValidationTabContent(
+    state: ResearchUiState,
+    onRefresh: () -> Unit
+) {
+    val dashboard = state.v2ValidationDashboard
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Diagnostic Alerts Banner
+        dashboard?.diagnosticAlerts?.let { alerts ->
+            if (alerts.isNotEmpty()) {
+                item {
+                    alerts.forEach { alert ->
+                        Surface(
+                            color = if (alert.severity == "CRITICAL" || alert.severity == "WARNING") TradeRed.copy(alpha = 0.12f) else TradePrimary.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (alert.severity == "WARNING") DemoAmber.copy(alpha = 0.5f) else TradePrimary.copy(alpha = 0.5f)),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = alert.code,
+                                    tint = if (alert.severity == "WARNING") DemoAmber else TradePrimaryLight,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Column {
+                                    Text(text = alert.title, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                    Text(text = alert.message, fontSize = 11.sp, color = TextSecondary)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 1: Overview
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(text = "Strategy V2 Validation Overview", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        TextButton(onClick = onRefresh) {
+                            Text("Refresh", fontSize = 11.sp, color = TradePrimaryLight)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val ov = dashboard?.overview ?: StrategyV2OverviewDto()
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Demo Trades", fontSize = 11.sp, color = TextMuted)
+                            Text("${ov.totalTrades}", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        }
+                        Column {
+                            Text("Wins / Losses", fontSize = 11.sp, color = TextMuted)
+                            Text("${ov.wins}W / ${ov.losses}L", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        }
+                        Column {
+                            Text("Win Rate", fontSize = 11.sp, color = TextMuted)
+                            Text("${String.format(Locale.US, "%.1f", ov.winRate)}%", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = if (ov.winRate >= 55) TradeProfit else DemoAmber)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Column {
+                            Text("Total PnL", fontSize = 11.sp, color = TextMuted)
+                            Text("+$${String.format(Locale.US, "%.2f", ov.totalPnL)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
+                        }
+                        Column {
+                            Text("Expectancy", fontSize = 11.sp, color = TextMuted)
+                            Text("+$${String.format(Locale.US, "%.2f", ov.expectancy)}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        }
+                        Column {
+                            Text("Max DD / Streak", fontSize = 11.sp, color = TextMuted)
+                            Text("$${String.format(Locale.US, "%.0f", ov.maxDrawdown)} (${ov.maxConsecutiveLosses}L)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextSecondary)
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 2: Asset Analysis Table
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Asset Breakdown (Win Rate & PnL)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Asset", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.5f))
+                        Text("Trades", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1f))
+                        Text("W/L", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1f))
+                        Text("Win%", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+                        Text("PnL", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+                    }
+                    HorizontalDivider(color = DarkBorder)
+
+                    dashboard?.assetAnalysis?.forEach { (asset, m) ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(asset, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, modifier = Modifier.weight(1.5f))
+                            Text("${m.tradesCount}", fontSize = 11.sp, color = TextSecondary, modifier = Modifier.weight(1f))
+                            Text("${m.wins}/${m.losses}", fontSize = 11.sp, color = TextSecondary, modifier = Modifier.weight(1f))
+                            Text("${String.format(Locale.US, "%.1f", m.winRate)}%", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (m.winRate >= 55) TradeProfit else DemoAmber, modifier = Modifier.weight(1.2f))
+                            Text("+$${String.format(Locale.US, "%.1f", m.totalPnL)}", fontSize = 11.sp, color = if (m.totalPnL >= 0) TradeProfit else TradeRed, modifier = Modifier.weight(1.2f))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 3: Regime Analysis Table
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Market Regime Breakdown", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Regime", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.8f))
+                        Text("Trades", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1f))
+                        Text("Win%", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+                        Text("PnL", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+                    }
+                    HorizontalDivider(color = DarkBorder)
+
+                    dashboard?.regimeAnalysis?.forEach { (reg, m) ->
+                        Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                            Text(reg, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, modifier = Modifier.weight(1.8f))
+                            Text("${m.tradesCount}", fontSize = 11.sp, color = TextSecondary, modifier = Modifier.weight(1f))
+                            Text("${String.format(Locale.US, "%.1f", m.winRate)}%", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (m.winRate >= 55) TradeProfit else DemoAmber, modifier = Modifier.weight(1.2f))
+                            Text("+$${String.format(Locale.US, "%.1f", m.totalPnL)}", fontSize = 11.sp, color = if (m.totalPnL >= 0) TradeProfit else TradeRed, modifier = Modifier.weight(1.2f))
+                        }
+                    }
+                }
+            }
+        }
+
+        // Section 4: Loss Clusters Discovery
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Text(text = "Loss Clusters & Patterns Identified", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    dashboard?.lossClusters?.forEach { cluster ->
+                        Surface(
+                            color = TradeRed.copy(alpha = 0.08f),
+                            shape = RoundedCornerShape(8.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, TradeRed.copy(alpha = 0.3f)),
+                            modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(10.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(text = cluster.condition, fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TradeRed)
+                                    Text(text = "Loss Rate: ${cluster.lossRate}% (${cluster.lossCount}/${cluster.totalTradesInCondition})", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                }
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(text = cluster.observation, fontSize = 11.sp, color = TextSecondary)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+

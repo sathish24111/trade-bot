@@ -110,6 +110,11 @@ exports.evaluateStrategyV2Signal = evaluateStrategyV2Signal;
 exports.compareStrategyV1VsV2 = compareStrategyV1VsV2;
 exports.validateStrategyV2Oos = validateStrategyV2Oos;
 exports.getStrategyV2Journal = getStrategyV2Journal;
+exports.getStrategyV2LossAnalysis = getStrategyV2LossAnalysis;
+exports.getStrategyV2LossClusters = getStrategyV2LossClusters;
+exports.getStrategyV2DiagnosticAlerts = getStrategyV2DiagnosticAlerts;
+exports.getStrategyV2ValidationReport = getStrategyV2ValidationReport;
+exports.collectDemoTrades = collectDemoTrades;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -1565,6 +1570,124 @@ async function getStrategyV2Journal(req, res) {
             ...SAFETY_METADATA,
             entries,
             total: entries.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2LossAnalysis(req, res) {
+    try {
+        const { lossAnalysisService } = await Promise.resolve().then(() => __importStar(require('../services/research/lossAnalysis.service')));
+        const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+        const symbol = req.query.symbol;
+        const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            report
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2LossClusters(req, res) {
+    try {
+        const { lossAnalysisService } = await Promise.resolve().then(() => __importStar(require('../services/research/lossAnalysis.service')));
+        const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+        const symbol = req.query.symbol;
+        const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            lossClusters: report.lossClusters,
+            consecutiveLossAnalysis: report.consecutiveLossAnalysis
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2DiagnosticAlerts(req, res) {
+    try {
+        const { lossAnalysisService } = await Promise.resolve().then(() => __importStar(require('../services/research/lossAnalysis.service')));
+        const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+        const symbol = req.query.symbol;
+        const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            alerts: report.diagnosticAlerts,
+            total: report.diagnosticAlerts.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2ValidationReport(req, res) {
+    try {
+        const { lossAnalysisService } = await Promise.resolve().then(() => __importStar(require('../services/research/lossAnalysis.service')));
+        const { strategyV2ComparisonService } = await Promise.resolve().then(() => __importStar(require('../services/research/strategyV2Comparison.service')));
+        const { outOfSampleValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/outOfSampleValidation.service')));
+        const { derivMarketProvider } = await Promise.resolve().then(() => __importStar(require('../services/market/derivMarket.provider')));
+        const { marketService } = await Promise.resolve().then(() => __importStar(require('../services/market.service')));
+        const userId = req.user?.userId;
+        const symbol = req.query.symbol || 'R_100';
+        // 1. Loss Analysis
+        const lossReport = await lossAnalysisService.analyzeLosses(userId, symbol);
+        // 2. V1 vs V2 Comparison
+        const comparison = await strategyV2ComparisonService.compareV1VsV2(userId, symbol);
+        // 3. OOS Validation
+        let candles = await derivMarketProvider.getCandles(symbol, '1m', 300);
+        if (!candles || candles.length < 50) {
+            candles = await marketService.getCandles(symbol, '1m', 300);
+        }
+        const oosReport = outOfSampleValidationService.runValidation(candles);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            validationDashboard: {
+                overview: {
+                    totalTrades: lossReport.totalTrades,
+                    wins: lossReport.totalWins,
+                    losses: lossReport.totalLosses,
+                    winRate: lossReport.overallWinRate,
+                    totalPnL: lossReport.overallPnL,
+                    expectancy: lossReport.overallExpectancy,
+                    maxDrawdown: lossReport.maxDrawdown,
+                    maxConsecutiveLosses: lossReport.maxConsecutiveLosses,
+                    sampleStatus: lossReport.totalTrades >= 30 ? 'ADEQUATE' : 'INSUFFICIENT_SAMPLE'
+                },
+                assetAnalysis: lossReport.assetAnalysis,
+                regimeAnalysis: lossReport.regimeAnalysis,
+                scoreAnalysis: lossReport.scoreAnalysis,
+                confirmationAnalysis: lossReport.confirmationAnalysis,
+                durationAnalysis: lossReport.durationAnalysis,
+                consecutiveLossAnalysis: lossReport.consecutiveLossAnalysis,
+                lossClusters: lossReport.lossClusters,
+                v1VsV2Comparison: comparison,
+                oosValidation: oosReport,
+                diagnosticAlerts: lossReport.diagnosticAlerts,
+                disclaimer: 'Strategy V2 Demo Validation & Loss Analysis Dashboard. All metrics are computed strictly for research in DEMO/PAPER mode.'
+            }
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function collectDemoTrades(req, res) {
+    try {
+        const { paperJournalService } = await Promise.resolve().then(() => __importStar(require('../services/research/paperJournal.service')));
+        const count = req.body.count ? Number(req.body.count) : 120;
+        const seeded = await paperJournalService.seedValidationDataset(count);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            message: `Successfully collected ${seeded.length} demo validation trades in paper journal.`,
+            collectedCount: seeded.length
         });
     }
     catch (err) {

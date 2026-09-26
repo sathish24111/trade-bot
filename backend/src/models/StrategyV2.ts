@@ -81,19 +81,106 @@ export interface PaperTradeJournalEntry {
   sessionId: string;
   userId: number;
   symbol: string;
-  regime: MarketRegimeV2 | string;
+  asset?: string;
   direction: 'BUY' | 'SELL' | 'WAIT';
+  regime: MarketRegimeV2 | string;
   signalScore: number;
+  emaScore?: number;
+  rsiScore?: number;
+  macdScore?: number;
+  bollingerScore?: number;
+  momentumScore?: number;
+  volatilityScore?: number;
   scoreBreakdown?: SignalScoreBreakdown | Record<string, any>;
   indicatorValues?: TechnicalIndicators | Record<string, any>;
   entryPrice: number;
   exitPrice: number;
+  contractDuration: number;
+  durationSeconds?: number;
+  payout: number;
   pnl: number;
   result: 'WIN' | 'LOSS';
-  durationSeconds: number;
-  dataQualityOk: boolean;
-  riskChecksPassed: boolean;
+  timestamp?: number;
   createdAt: Date;
+  dataQualityOk: boolean;
+  dataQuality?: string;
+  riskChecksPassed: boolean;
+  riskState?: Record<string, any>;
+  signalInvalidationState?: string;
+}
+
+export interface ResearchCategoryMetrics {
+  category: string;
+  key: string;
+  tradesCount: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+  totalPnL: number;
+  averagePnL: number;
+  averageWinningTrade: number;
+  averageLosingTrade: number;
+  maxConsecutiveLosses: number;
+  maxDrawdown: number;
+  expectancy: number;
+  profitFactor: number;
+  sampleStatus: 'ADEQUATE' | 'INSUFFICIENT_SAMPLE';
+  sampleWarning?: string;
+}
+
+export interface LossClusterPattern {
+  id: string;
+  title: string;
+  condition: string;
+  lossCount: number;
+  totalTradesInCondition: number;
+  lossRate: number;
+  impactPnL: number;
+  severity: 'LOW' | 'MEDIUM' | 'HIGH';
+  observation: string;
+  disclaimer: string;
+}
+
+export interface DiagnosticAlert {
+  id: string;
+  code:
+    | 'LOSS_CLUSTER_DETECTED'
+    | 'HIGH_DRAWDOWN'
+    | 'CONSECUTIVE_LOSS_LIMIT'
+    | 'INSUFFICIENT_SAMPLE'
+    | 'DATA_QUALITY_DEGRADATION'
+    | 'REGIME_SPECIFIC_DEGRADATION';
+  severity: 'INFO' | 'WARNING' | 'CRITICAL';
+  title: string;
+  message: string;
+  category: string;
+  timestamp: number;
+}
+
+export interface LossAnalysisReport {
+  totalTrades: number;
+  totalWins: number;
+  totalLosses: number;
+  overallWinRate: number;
+  overallPnL: number;
+  overallExpectancy: number;
+  maxDrawdown: number;
+  maxConsecutiveLosses: number;
+  assetAnalysis: Record<string, ResearchCategoryMetrics>;
+  regimeAnalysis: Record<string, ResearchCategoryMetrics>;
+  scoreAnalysis: Record<string, ResearchCategoryMetrics>;
+  confirmationAnalysis: Record<string, ResearchCategoryMetrics>;
+  durationAnalysis: Record<string, ResearchCategoryMetrics>;
+  consecutiveLossAnalysis: {
+    singleLossEvents: number;
+    twoConsecutiveLossEvents: number;
+    threeConsecutiveLossEvents: number;
+    fourPlusConsecutiveLossEvents: number;
+    longestLossStreak: number;
+  };
+  lossClusters: LossClusterPattern[];
+  diagnosticAlerts: DiagnosticAlert[];
+  disclaimer: string;
 }
 
 export interface StrategyComparisonMetrics {
@@ -106,6 +193,10 @@ export interface StrategyComparisonMetrics {
   profitFactor: number;
   maxDrawdown: number;
   sharpeRatio: number;
+  maxConsecutiveLosses?: number;
+  tradesPerSession?: number;
+  waitPercentage?: number;
+  expectancy?: number;
   sampleSizeStatus?: 'ADEQUATE' | 'MODERATE' | 'INSUFFICIENT_SAMPLE';
   sampleSizeWarning?: string;
 }
@@ -166,3 +257,4 @@ export interface OutOfSampleValidationReport {
   verdict: 'PASS' | 'MARGINAL' | 'FAIL';
   disclaimer: string;
 }
+

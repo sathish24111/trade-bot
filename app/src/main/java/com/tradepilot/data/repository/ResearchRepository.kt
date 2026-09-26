@@ -9,4 +9,5 @@ interface ResearchRepository {
     suspend fun runMonteCarlo(req: MonteCarloRequest): Result<MonteCarloResultDto>
     suspend fun getMarketRegimes(asset: String, timeframe: String = "5m"): Result<MarketRegimesResponse>
     suspend fun calculatePositionSize(req: PositionSizingRequest): Result<PositionSizingCalculationDto>
+    suspend fun getV2ValidationDashboard(symbol: String = "R_100"): Result<V2ValidationDashboardDto>
 }

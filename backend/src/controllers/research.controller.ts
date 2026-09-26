@@ -1633,4 +1633,131 @@ export async function getStrategyV2Journal(req: AuthRequest, res: Response) {
   }
 }
 
+export async function getStrategyV2LossAnalysis(req: AuthRequest, res: Response) {
+  try {
+    const { lossAnalysisService } = await import('../services/research/lossAnalysis.service');
+    const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+    const symbol = req.query.symbol as string;
+
+    const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      report
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2LossClusters(req: AuthRequest, res: Response) {
+  try {
+    const { lossAnalysisService } = await import('../services/research/lossAnalysis.service');
+    const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+    const symbol = req.query.symbol as string;
+
+    const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      lossClusters: report.lossClusters,
+      consecutiveLossAnalysis: report.consecutiveLossAnalysis
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2DiagnosticAlerts(req: AuthRequest, res: Response) {
+  try {
+    const { lossAnalysisService } = await import('../services/research/lossAnalysis.service');
+    const userId = req.user?.userId || (req.query.userId ? Number(req.query.userId) : undefined);
+    const symbol = req.query.symbol as string;
+
+    const report = await lossAnalysisService.analyzeLosses(userId, symbol);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      alerts: report.diagnosticAlerts,
+      total: report.diagnosticAlerts.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2ValidationReport(req: AuthRequest, res: Response) {
+  try {
+    const { lossAnalysisService } = await import('../services/research/lossAnalysis.service');
+    const { strategyV2ComparisonService } = await import('../services/research/strategyV2Comparison.service');
+    const { outOfSampleValidationService } = await import('../services/research/outOfSampleValidation.service');
+    const { derivMarketProvider } = await import('../services/market/derivMarket.provider');
+    const { marketService } = await import('../services/market.service');
+
+    const userId = req.user?.userId;
+    const symbol = (req.query.symbol as string) || 'R_100';
+
+    // 1. Loss Analysis
+    const lossReport = await lossAnalysisService.analyzeLosses(userId, symbol);
+
+    // 2. V1 vs V2 Comparison
+    const comparison = await strategyV2ComparisonService.compareV1VsV2(userId, symbol);
+
+    // 3. OOS Validation
+    let candles = await derivMarketProvider.getCandles(symbol, '1m', 300);
+    if (!candles || candles.length < 50) {
+      candles = await marketService.getCandles(symbol, '1m', 300);
+    }
+    const oosReport = outOfSampleValidationService.runValidation(candles);
+
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      validationDashboard: {
+        overview: {
+          totalTrades: lossReport.totalTrades,
+          wins: lossReport.totalWins,
+          losses: lossReport.totalLosses,
+          winRate: lossReport.overallWinRate,
+          totalPnL: lossReport.overallPnL,
+          expectancy: lossReport.overallExpectancy,
+          maxDrawdown: lossReport.maxDrawdown,
+          maxConsecutiveLosses: lossReport.maxConsecutiveLosses,
+          sampleStatus: lossReport.totalTrades >= 30 ? 'ADEQUATE' : 'INSUFFICIENT_SAMPLE'
+        },
+        assetAnalysis: lossReport.assetAnalysis,
+        regimeAnalysis: lossReport.regimeAnalysis,
+        scoreAnalysis: lossReport.scoreAnalysis,
+        confirmationAnalysis: lossReport.confirmationAnalysis,
+        durationAnalysis: lossReport.durationAnalysis,
+        consecutiveLossAnalysis: lossReport.consecutiveLossAnalysis,
+        lossClusters: lossReport.lossClusters,
+        v1VsV2Comparison: comparison,
+        oosValidation: oosReport,
+        diagnosticAlerts: lossReport.diagnosticAlerts,
+        disclaimer: 'Strategy V2 Demo Validation & Loss Analysis Dashboard. All metrics are computed strictly for research in DEMO/PAPER mode.'
+      }
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function collectDemoTrades(req: AuthRequest, res: Response) {
+  try {
+    const { paperJournalService } = await import('../services/research/paperJournal.service');
+    const count = req.body.count ? Number(req.body.count) : 120;
+    const seeded = await paperJournalService.seedValidationDataset(count);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      message: `Successfully collected ${seeded.length} demo validation trades in paper journal.`,
+      collectedCount: seeded.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+
 

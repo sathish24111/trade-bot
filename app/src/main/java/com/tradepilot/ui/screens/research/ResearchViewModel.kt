@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class ResearchTab(val title: String) {
+    V2_VALIDATION("V2 Validation"),
     BACKTEST("Backtest"),
     OPTIMIZE("Optimize"),
     WALK_FORWARD("Walk-Forward"),
@@ -21,7 +22,7 @@ enum class ResearchTab(val title: String) {
 }
 
 data class ResearchUiState(
-    val selectedTab: ResearchTab = ResearchTab.BACKTEST,
+    val selectedTab: ResearchTab = ResearchTab.V2_VALIDATION,
     val selectedAsset: String = "EUR/USD",
     val selectedTimeframe: String = "5m",
     val selectedStrategy: String = "EMA_RSI",
@@ -29,6 +30,7 @@ data class ResearchUiState(
     val tradeAmount: Double = 100.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val v2ValidationDashboard: V2ValidationDashboardDto? = null,
     val backtestResult: BacktestResultDto? = null,
     val optimizationResult: OptimizationResultDto? = null,
     val walkForwardResult: WalkForwardResultDto? = null,
@@ -52,12 +54,16 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load initial regime analysis
+        // Automatically load initial validation and regime analysis
+        loadV2ValidationDashboard()
         loadRegimes()
     }
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (tab == ResearchTab.V2_VALIDATION && _uiState.value.v2ValidationDashboard == null) {
+            loadV2ValidationDashboard()
+        }
         if (tab == ResearchTab.REGIMES && _uiState.value.regimeResponse == null) {
             loadRegimes()
         }
@@ -219,4 +225,18 @@ class ResearchViewModel(
             }
         }
     }
+
+    fun loadV2ValidationDashboard(symbol: String = _uiState.value.selectedAsset) {
+        val s = _uiState.value
+        _uiState.value = s.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val result = repository.getV2ValidationDashboard(symbol)
+            result.onSuccess { data ->
+                _uiState.value = _uiState.value.copy(isLoading = false, v2ValidationDashboard = data)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2 validation dashboard")
+            }
+        }
+    }
 }
+

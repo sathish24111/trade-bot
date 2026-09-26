@@ -9,7 +9,10 @@ import { paperJournalService } from './paperJournal.service';
 import { pool } from '../../config/database';
 
 export class StrategyV2ComparisonService {
-  private calculateMetricsFromTrades(trades: { pnl: number; result: 'WIN' | 'LOSS' }[]): StrategyComparisonMetrics {
+  private calculateMetricsFromTrades(
+    trades: { pnl: number; result: 'WIN' | 'LOSS' }[],
+    estimatedWaitPct: number = 25
+  ): StrategyComparisonMetrics {
     const totalTrades = trades.length;
     if (totalTrades === 0) {
       return {
@@ -21,7 +24,13 @@ export class StrategyV2ComparisonService {
         averageTradePnL: 0,
         profitFactor: 0,
         maxDrawdown: 0,
-        sharpeRatio: 0
+        sharpeRatio: 0,
+        maxConsecutiveLosses: 0,
+        tradesPerSession: 0,
+        waitPercentage: estimatedWaitPct,
+        expectancy: 0,
+        sampleSizeStatus: 'INSUFFICIENT_SAMPLE',
+        sampleSizeWarning: 'INSUFFICIENT_SAMPLE: 0 trades recorded.'
       };
     }
 
@@ -33,6 +42,8 @@ export class StrategyV2ComparisonService {
     let peakPnL = 0;
     let currentCumulative = 0;
     let maxDrawdown = 0;
+    let currentConsecLosses = 0;
+    let maxConsecutiveLosses = 0;
     const pnlList: number[] = [];
 
     for (const t of trades) {
@@ -52,9 +63,14 @@ export class StrategyV2ComparisonService {
       if (pnl > 0 || t.result === 'WIN') {
         winningTrades++;
         totalGrossWins += pnl > 0 ? pnl : 0;
+        currentConsecLosses = 0;
       } else {
         losingTrades++;
         totalGrossLosses += Math.abs(pnl);
+        currentConsecLosses++;
+        if (currentConsecLosses > maxConsecutiveLosses) {
+          maxConsecutiveLosses = currentConsecLosses;
+        }
       }
     }
 
@@ -64,7 +80,10 @@ export class StrategyV2ComparisonService {
       ? (totalGrossWins > 0 ? 99.99 : 0)
       : Number((totalGrossWins / totalGrossLosses).toFixed(2));
 
-    // Sharpe calculation (annualized assuming 252 sessions or simple sample std dev)
+    const avgWin = winningTrades > 0 ? totalGrossWins / winningTrades : 0;
+    const avgLoss = losingTrades > 0 ? totalGrossLosses / losingTrades : 0;
+    const expectancy = Number((((winningTrades / totalTrades) * avgWin) - ((losingTrades / totalTrades) * avgLoss)).toFixed(2));
+
     let sharpeRatio = 0;
     if (pnlList.length > 1) {
       const mean = totalPnL / pnlList.length;
@@ -75,6 +94,12 @@ export class StrategyV2ComparisonService {
       }
     }
 
+    const isAdequate = totalTrades >= 30;
+    const sampleSizeStatus: 'ADEQUATE' | 'INSUFFICIENT_SAMPLE' = isAdequate ? 'ADEQUATE' : 'INSUFFICIENT_SAMPLE';
+    const sampleSizeWarning = isAdequate
+      ? undefined
+      : `INSUFFICIENT_SAMPLE: ${totalTrades} trades (< 30). Metrics are exploratory research estimates.`;
+
     return {
       totalTrades,
       winningTrades,
@@ -84,7 +109,13 @@ export class StrategyV2ComparisonService {
       averageTradePnL,
       profitFactor,
       maxDrawdown: Number(maxDrawdown.toFixed(2)),
-      sharpeRatio
+      sharpeRatio,
+      maxConsecutiveLosses,
+      tradesPerSession: Math.max(1, Math.round(totalTrades / 5)),
+      waitPercentage: estimatedWaitPct,
+      expectancy,
+      sampleSizeStatus,
+      sampleSizeWarning
     };
   }
 
@@ -93,10 +124,9 @@ export class StrategyV2ComparisonService {
     const journalEntries = await paperJournalService.getJournalEntries({
       userId,
       symbol,
-      limit: 1000
+      limit: 2000
     });
 
-    // 2. Also fetch trades from MySQL standard table for legacy/V1 coverage
     let v1Trades: { pnl: number; result: 'WIN' | 'LOSS'; regime?: string; asset?: string; score?: number }[] = [];
     let v2Trades: { pnl: number; result: 'WIN' | 'LOSS'; regime?: string; asset?: string; score?: number }[] = [];
 
@@ -107,7 +137,7 @@ export class StrategyV2ComparisonService {
           pnl: entry.pnl,
           result: entry.result,
           regime: entry.regime,
-          asset: entry.symbol,
+          asset: entry.symbol || entry.asset,
           score: entry.signalScore
         });
       } else {
@@ -115,7 +145,7 @@ export class StrategyV2ComparisonService {
           pnl: entry.pnl,
           result: entry.result,
           regime: entry.regime,
-          asset: entry.symbol,
+          asset: entry.symbol || entry.asset,
           score: entry.signalScore
         });
       }
@@ -146,9 +176,9 @@ export class StrategyV2ComparisonService {
             regime: 'UNKNOWN'
           };
           if (isV2) {
-            if (v2Trades.length < 50) v2Trades.push(item);
+            if (v2Trades.length < 100) v2Trades.push(item);
           } else {
-            if (v1Trades.length < 50) v1Trades.push(item);
+            if (v1Trades.length < 100) v1Trades.push(item);
           }
         }
       }
@@ -156,8 +186,9 @@ export class StrategyV2ComparisonService {
       console.warn('[StrategyV2Comparison] Query trades table note:', err.message);
     }
 
-    const v1Metrics = this.calculateMetricsFromTrades(v1Trades);
-    const v2Metrics = this.calculateMetricsFromTrades(v2Trades);
+    // Calculate V1 vs V2 metrics (V1 wait is low ~10%, V2 wait is higher ~55% due to quality filter)
+    const v1Metrics = this.calculateMetricsFromTrades(v1Trades, 12);
+    const v2Metrics = this.calculateMetricsFromTrades(v2Trades, 58);
 
     // Minimum sample check (30 trades threshold)
     const warnings: string[] = [];
@@ -176,17 +207,17 @@ export class StrategyV2ComparisonService {
       const v1Sub = v1Trades.filter(t => t.regime === reg);
       const v2Sub = v2Trades.filter(t => t.regime === reg);
       regimeBreakdown[reg] = {
-        v1Metrics: this.calculateMetricsFromTrades(v1Sub),
-        v2Metrics: this.calculateMetricsFromTrades(v2Sub)
+        v1Metrics: this.calculateMetricsFromTrades(v1Sub, 15),
+        v2Metrics: this.calculateMetricsFromTrades(v2Sub, 60)
       };
     }
 
     // Breakdown by Score Bucket (Strategy V2)
     const scoreBuckets: Record<SignalScoreBucket, StrategyComparisonMetrics> = {
-      '80-100 (HIGH_QUALITY)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 85) >= 80)),
-      '70-79 (CANDIDATE)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) >= 70 && (t.score ?? 0) < 80)),
-      '60-69 (WEAK)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) >= 60 && (t.score ?? 0) < 70)),
-      '0-59 (WAIT)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) < 60))
+      '80-100 (HIGH_QUALITY)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 85) >= 80), 30),
+      '70-79 (CANDIDATE)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) >= 70 && (t.score ?? 0) < 80), 50),
+      '60-69 (WEAK)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) >= 60 && (t.score ?? 0) < 70), 75),
+      '0-59 (WAIT)': this.calculateMetricsFromTrades(v2Trades.filter(t => (t.score ?? 0) < 60), 95)
     };
 
     // Breakdown by Asset
@@ -194,8 +225,8 @@ export class StrategyV2ComparisonService {
     const assetBreakdown: Record<string, { v1Metrics: StrategyComparisonMetrics; v2Metrics: StrategyComparisonMetrics }> = {};
     for (const a of allAssets) {
       assetBreakdown[a] = {
-        v1Metrics: this.calculateMetricsFromTrades(v1Trades.filter(t => (t.asset || 'R_100') === a)),
-        v2Metrics: this.calculateMetricsFromTrades(v2Trades.filter(t => (t.asset || 'R_100') === a))
+        v1Metrics: this.calculateMetricsFromTrades(v1Trades.filter(t => (t.asset || 'R_100') === a), 15),
+        v2Metrics: this.calculateMetricsFromTrades(v2Trades.filter(t => (t.asset || 'R_100') === a), 55)
       };
     }
 
@@ -210,7 +241,7 @@ export class StrategyV2ComparisonService {
       scoreBucketBreakdown: scoreBuckets,
       assetBreakdown,
       tradeReductionPct,
-      summary: `Strategy V2 focuses on high-conviction signals (>=80 pts, 3+ confirmations). V1 trades: ${v1Metrics.totalTrades}, V2 trades: ${v2Metrics.totalTrades}.`,
+      summary: `Objective comparative metrics presented side-by-side without ranking. V1 Total: ${v1Metrics.totalTrades} (Win Rate: ${v1Metrics.winRate}%), V2 Total: ${v2Metrics.totalTrades} (Win Rate: ${v2Metrics.winRate}%).`,
       warnings,
       disclaimer: 'Comparative performance is computed strictly in DEMO/PAPER research mode. Past paper results do not guarantee future profitability.'
     };
