@@ -9,6 +9,7 @@ router.get('/demo-promotion/status', (req, res) => demoPromotion_controller_1.de
 router.get('/demo-promotion/monitoring', (req, res) => demoPromotion_controller_1.demoPromotionController.getMonitoring(req, res));
 router.post('/demo-promotion/rollback', (req, res) => demoPromotion_controller_1.demoPromotionController.postRollback(req, res));
 router.post('/demo-promotion/restore', (req, res) => demoPromotion_controller_1.demoPromotionController.postRestore(req, res));
+router.post('/demo-promotion/simulate-batch', (req, res) => demoPromotion_controller_1.demoPromotionController.postSimulateBatch(req, res));
 router.get('/', (req, res) => strategyControl_controller_1.strategyControlController.getStrategies(req, res));
 router.get('/audit-log', (req, res) => strategyControl_controller_1.strategyControlController.getAuditLog(req, res));
 router.patch('/:id/state', (req, res) => strategyControl_controller_1.strategyControlController.updateState(req, res));

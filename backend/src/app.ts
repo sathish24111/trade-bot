@@ -61,6 +61,7 @@ app.use('/api/monitor', monitorRoutes);
 app.use('/api/signals', signalRoutes);
 app.use('/api/risk', riskRoutes);
 app.use('/api/strategies', strategyControlRoutes);
+app.use('/api/strategy-control', strategyControlRoutes);
 app.use('/api/alerts', alertRoutes);
 app.use('/api/portfolio', portfolioExposureRoutes);
 app.use('/api/divergence', divergenceRoutes);

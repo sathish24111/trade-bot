@@ -62,6 +62,7 @@ exports.app.use('/api/monitor', monitor_routes_1.default);
 exports.app.use('/api/signals', signal_routes_1.default);
 exports.app.use('/api/risk', risk_routes_1.default);
 exports.app.use('/api/strategies', strategyControl_routes_1.default);
+exports.app.use('/api/strategy-control', strategyControl_routes_1.default);
 exports.app.use('/api/alerts', alert_routes_1.default);
 exports.app.use('/api/portfolio', portfolioExposure_routes_1.default);
 exports.app.use('/api/divergence', divergence_routes_1.default);

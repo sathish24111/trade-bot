@@ -95,6 +95,29 @@ export class DemoPromotionController {
       });
     }
   }
+
+  public async postSimulateBatch(req: Request, res: Response) {
+    try {
+      const { count = 25 } = req.body || {};
+      const monitoring = demoPromotionService.simulateDemoTradeBatch(Number(count) || 25);
+      return res.json({
+        success: true,
+        message: `Successfully simulated and recorded batch of ${count} demo trades towards 200 target.`,
+        monitoring,
+        mode: 'PAPER',
+        isRealMoney: false,
+        brokerConnected: false
+      });
+    } catch (err: any) {
+      return res.status(500).json({
+        success: false,
+        error: err.message,
+        mode: 'PAPER',
+        isRealMoney: false,
+        brokerConnected: false
+      });
+    }
+  }
 }
 
 export const demoPromotionController = new DemoPromotionController();
