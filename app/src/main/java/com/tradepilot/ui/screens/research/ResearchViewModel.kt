@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class ResearchTab(val title: String) {
+    V2_3_MULTI_SESSION_LAB("V2.3 Multi-Session Lab"),
     V2_2_FRESH_VALIDATION("V2.2 Fresh Validation"),
     V2_1_RESEARCH_LAB("V2.1 Research Lab"),
     V2_VALIDATION("V2 Validation"),
@@ -24,7 +25,7 @@ enum class ResearchTab(val title: String) {
 }
 
 data class ResearchUiState(
-    val selectedTab: ResearchTab = ResearchTab.V2_2_FRESH_VALIDATION,
+    val selectedTab: ResearchTab = ResearchTab.V2_3_MULTI_SESSION_LAB,
     val selectedAsset: String = "EUR/USD",
     val selectedTimeframe: String = "5m",
     val selectedStrategy: String = "EMA_RSI",
@@ -32,6 +33,7 @@ data class ResearchUiState(
     val tradeAmount: Double = 100.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val v2_3MultiSessionDashboard: V2_3_MultiSessionDashboardDto? = null,
     val v2_2FreshDashboard: V2_2_FreshValidationDashboardDto? = null,
     val v2_1LabDashboard: V2_1_ResearchLabDashboardDto? = null,
     val v2ValidationDashboard: V2ValidationDashboardDto? = null,
@@ -58,7 +60,8 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        // Automatically load V2.3 Multi-Session Lab, V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        loadV2_3MultiSessionDashboard()
         loadV2_2FreshValidationDashboard()
         loadV2_1ResearchLabDashboard()
         loadV2ValidationDashboard()
@@ -67,6 +70,9 @@ class ResearchViewModel(
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (tab == ResearchTab.V2_3_MULTI_SESSION_LAB && _uiState.value.v2_3MultiSessionDashboard == null) {
+            loadV2_3MultiSessionDashboard()
+        }
         if (tab == ResearchTab.V2_2_FRESH_VALIDATION && _uiState.value.v2_2FreshDashboard == null) {
             loadV2_2FreshValidationDashboard()
         }
@@ -275,6 +281,19 @@ class ResearchViewModel(
                 _uiState.value = _uiState.value.copy(isLoading = false, v2_2FreshDashboard = data)
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.2 fresh validation dashboard")
+            }
+        }
+    }
+
+    fun loadV2_3MultiSessionDashboard() {
+        val s = _uiState.value
+        _uiState.value = s.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val result = repository.getV2_3MultiSessionDashboard()
+            result.onSuccess { data ->
+                _uiState.value = _uiState.value.copy(isLoading = false, v2_3MultiSessionDashboard = data)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.3 multi-session dashboard")
             }
         }
     }

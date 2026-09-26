@@ -377,6 +377,10 @@ interface ApiService {
     // Strategy V2.2 Extended Fresh Validation Layer
     @GET("api/research/strategy-v2-2/fresh-dashboard")
     suspend fun getV2_2FreshValidationDashboard(): Response<V2_2_FreshValidationDashboardResponse>
+
+    // Strategy V2.3 Multi-Session Validation & Promotion Gate Research Module
+    @GET("api/research/strategy-v2-3/dashboard")
+    suspend fun getV2_3MultiSessionDashboard(): Response<V2_3_MultiSessionDashboardResponse>
 }
 
 

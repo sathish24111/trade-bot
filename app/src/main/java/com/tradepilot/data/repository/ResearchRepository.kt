@@ -12,6 +12,7 @@ interface ResearchRepository {
     suspend fun getV2ValidationDashboard(symbol: String = "R_100"): Result<V2ValidationDashboardDto>
     suspend fun getV2_1ResearchLabDashboard(): Result<V2_1_ResearchLabDashboardDto>
     suspend fun getV2_2FreshValidationDashboard(): Result<V2_2_FreshValidationDashboardDto>
+    suspend fun getV2_3MultiSessionDashboard(): Result<V2_3_MultiSessionDashboardDto>
 }
 
 

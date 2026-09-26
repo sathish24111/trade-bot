@@ -95,7 +95,15 @@ import {
   getStrategyV2_2Breakdowns,
   getStrategyV2_2ConfidenceIntervals,
   getStrategyV2_2OosValidation,
-  collectFreshDatasetV2_2
+  collectFreshDatasetV2_2,
+  getStrategyV2_3MultiSessionDashboard,
+  getStrategyV2_3SessionsList,
+  getStrategyV2_3HypothesesSummary,
+  getStrategyV2_3CrossAsset,
+  getStrategyV2_3CrossRegime,
+  getStrategyV2_3OosValidation,
+  getStrategyV2_3PromotionGate,
+  collectMultiSessionDatasetV2_3
 } from '../controllers/research.controller';
 
 
@@ -131,6 +139,16 @@ router.get('/strategy-v2-2/breakdowns', getStrategyV2_2Breakdowns);
 router.get('/strategy-v2-2/confidence-intervals', getStrategyV2_2ConfidenceIntervals);
 router.get('/strategy-v2-2/oos-validation', getStrategyV2_2OosValidation);
 router.post('/strategy-v2-2/collect-fresh-dataset', collectFreshDatasetV2_2);
+
+// Strategy V2.3: Multi-Session Validation & Promotion Gate Research Module
+router.get('/strategy-v2-3/dashboard', getStrategyV2_3MultiSessionDashboard);
+router.get('/strategy-v2-3/sessions', getStrategyV2_3SessionsList);
+router.get('/strategy-v2-3/hypotheses', getStrategyV2_3HypothesesSummary);
+router.get('/strategy-v2-3/cross-asset', getStrategyV2_3CrossAsset);
+router.get('/strategy-v2-3/cross-regime', getStrategyV2_3CrossRegime);
+router.get('/strategy-v2-3/oos-validation', getStrategyV2_3OosValidation);
+router.get('/strategy-v2-3/promotion-gate', getStrategyV2_3PromotionGate);
+router.post('/strategy-v2-3/collect-dataset', collectMultiSessionDatasetV2_3);
 
 
 

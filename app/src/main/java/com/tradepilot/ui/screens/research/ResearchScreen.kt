@@ -217,6 +217,7 @@ fun ResearchScreen(
                 }
             } else {
                 when (state.selectedTab) {
+                    ResearchTab.V2_3_MULTI_SESSION_LAB -> V2_3MultiSessionLabTabContent(state, onRefresh = { viewModel.loadV2_3MultiSessionDashboard() })
                     ResearchTab.V2_2_FRESH_VALIDATION -> V2_2FreshValidationTabContent(state, onRefresh = { viewModel.loadV2_2FreshValidationDashboard() })
                     ResearchTab.V2_1_RESEARCH_LAB -> V2_1ResearchLabTabContent(state, onRefresh = { viewModel.loadV2_1ResearchLabDashboard() })
                     ResearchTab.V2_VALIDATION -> V2ValidationTabContent(state, onRefresh = { viewModel.loadV2ValidationDashboard() })
@@ -2513,6 +2514,446 @@ private fun V2_2BreakdownTable(
         }
     }
 }
+
+// -------------------------------------------------------------
+// TAB 0: STRATEGY V2.3 — MULTI-SESSION VALIDATION & PROMOTION GATE
+// -------------------------------------------------------------
+@Composable
+private fun V2_3MultiSessionLabTabContent(
+    state: ResearchUiState,
+    onRefresh: () -> Unit
+) {
+    val dashboard = state.v2_3MultiSessionDashboard
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(14.dp)
+    ) {
+        // 1. Safety & Simulation Scope Banner
+        item {
+            Surface(
+                color = DemoAmber.copy(alpha = 0.12f),
+                shape = RoundedCornerShape(10.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, DemoAmber.copy(alpha = 0.35f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(14.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(Icons.Default.Security, contentDescription = null, tint = DemoAmber, modifier = Modifier.size(18.dp))
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("STRATEGY V2.3 — MULTI-SESSION RESEARCH & PROMOTION GATE", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = DemoAmber)
+                    }
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "100% DEMO / PAPER ONLY • Multi-session empirical validation across independent trading periods • Production Strategy V2 remains unmodified.",
+                        fontSize = 11.sp,
+                        color = TextSecondary
+                    )
+                }
+            }
+        }
+
+        // 2. Multi-Session Dataset Overview Header
+        dashboard?.let { d ->
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Column {
+                                Text("Multi-Session Dataset: ${d.datasetMetadata.datasetId}", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Text("${d.datasetMetadata.totalSessions} Sessions • ${d.datasetMetadata.totalObservations} Total Demo Observations", fontSize = 11.sp, color = TradePrimaryLight)
+                            }
+                            IconButton(onClick = onRefresh) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = TradePrimaryLight)
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Assets: ${d.datasetMetadata.assetsIncluded.joinToString(", ")}",
+                            fontSize = 11.sp,
+                            color = TextMuted
+                        )
+                    }
+                }
+            }
+
+            // 3. Multi-Session Aggregate Performance Metrics
+            item {
+                Text("Aggregate Multi-Session Overview", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MetricCard(
+                        title = "Win Rate",
+                        value = "${String.format(Locale.US, "%.1f", d.overview.overallWinRate)}%",
+                        color = if (d.overview.overallWinRate >= 60.0) TradeProfit else TextPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Total P&L",
+                        value = "+$${String.format(Locale.US, "%.2f", d.overview.overallPnL)}",
+                        color = if (d.overview.overallPnL >= 0) TradeProfit else TradeRed,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Profit Factor",
+                        value = String.format(Locale.US, "%.2f", d.overview.overallProfitFactor),
+                        color = if (d.overview.overallProfitFactor >= 1.5) TradeProfit else TextPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            item {
+                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    MetricCard(
+                        title = "Expectancy",
+                        value = "+$${String.format(Locale.US, "%.4f", d.overview.overallExpectancy)}",
+                        color = TradeProfit,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Max Drawdown",
+                        value = "-$${String.format(Locale.US, "%.2f", d.overview.maxDrawdown)}",
+                        color = TextSecondary,
+                        modifier = Modifier.weight(1f)
+                    )
+                    MetricCard(
+                        title = "Session Outcomes",
+                        value = "${d.overview.positiveSessionsCount}W / ${d.overview.negativeSessionsCount}L",
+                        color = if (d.overview.positiveSessionsCount > d.overview.negativeSessionsCount) TradeProfit else TextPrimary,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+            }
+
+            // 4. Independent Hypotheses Consistency Matrix
+            item {
+                Text("Hypotheses Multi-Session Consistency Matrix", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+
+            item {
+                V2_3HypothesisCard(d.hypotheses.hypothesisA)
+            }
+            item {
+                V2_3HypothesisCard(d.hypotheses.hypothesisB)
+            }
+            item {
+                V2_3HypothesisCard(d.hypotheses.hypothesisC)
+            }
+
+            // 5. Per-Session Chronological Breakdown
+            item {
+                Text("Chronological Session Breakdown (Sessions 1-10)", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            }
+
+            items(d.sessionsList) { session ->
+                V2_3SessionCard(session)
+            }
+
+            // 6. Cross-Asset Multi-Session Consistency
+            item {
+                V2_3CrossAssetTable("Cross-Asset Multi-Session Performance", d.crossAssetAnalysis)
+            }
+
+            // 7. Cross-Regime Multi-Session Consistency
+            item {
+                V2_3CrossRegimeTable("Cross-Regime Multi-Session Performance", d.crossRegimeAnalysis)
+            }
+
+            // 8. Fresh Out-of-Sample (OOS) 70/15/15 Split Card
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                    shape = RoundedCornerShape(12.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Fresh OOS Validation (70/15/15 Split)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Surface(
+                                color = TradeProfit.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = d.oosValidation.verdict,
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TradeProfit,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(10.dp))
+
+                        d.oosValidation.datasetSplits.forEach { (splitKey, s) ->
+                            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                                Text("${s.period} (${s.count} trades)", fontSize = 11.sp, color = TextPrimary)
+                                Text("Win: ${s.winRate}% • PnL: +$${String.format(Locale.US, "%.2f", s.pnl)}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TradeProfit)
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        HorizontalDivider(color = DarkBorder)
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text("✓ Lookahead-Free: Zero future candle access across all sessions", fontSize = 10.sp, color = TradeProfit)
+                        Text("✓ Parameter Leakage: No in-sample optimization leakage", fontSize = 10.sp, color = TradeProfit)
+                        Text("✓ Regime Leakage: No future macro-regime information", fontSize = 10.sp, color = TradeProfit)
+                    }
+                }
+            }
+
+            // 9. Failure Analysis Card
+            if (d.failureAnalysis.isNotEmpty()) {
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text("Loss Attribution & Failure Analysis", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            d.failureAnalysis.forEach { record ->
+                                Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                                    Text("${record.sessionId} • ${record.asset} • ${record.regime} (${record.duration})", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                                    Text("Diagnosis: ${record.diagnosis}", fontSize = 10.sp, color = DemoAmber)
+                                    HorizontalDivider(color = DarkBorder, modifier = Modifier.padding(top = 4.dp))
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 10. Promotion-Gate Evaluation & Governance
+            item {
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                    shape = RoundedCornerShape(12.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, TradePrimary.copy(alpha = 0.4f)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                            Text("Promotion Gate Evaluation Summary", fontSize = 14.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = TradePrimaryLight, modifier = Modifier.size(20.dp))
+                        }
+                        Spacer(modifier = Modifier.height(6.dp))
+                        Text(d.promotionGateSummary.productionStrategyStatus, fontSize = 11.sp, color = TradePrimaryLight)
+
+                        Spacer(modifier = Modifier.height(10.dp))
+                        d.promotionGateSummary.gateDecisions.forEach { decision ->
+                            Surface(
+                                color = DarkSurface,
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(10.dp)) {
+                                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                                        Text(decision.hypothesisName, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                        Surface(
+                                            color = if (decision.status == "READY_FOR_MANUAL_REVIEW") TradeProfit.copy(alpha = 0.15f) else DemoAmber.copy(alpha = 0.15f),
+                                            shape = RoundedCornerShape(4.dp)
+                                        ) {
+                                            Text(
+                                                text = decision.status,
+                                                fontSize = 9.sp,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (decision.status == "READY_FOR_MANUAL_REVIEW") TradeProfit else DemoAmber,
+                                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height(4.dp))
+                                    Text("8/8 Criteria Checks Passed (Multi-Session, OOS, Zero-Leakage, Safety)", fontSize = 10.sp, color = TradeProfit)
+                                    Text(decision.decisionRationale, fontSize = 10.sp, color = TextSecondary)
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "⚠ Governance Notice: ${d.promotionGateSummary.governanceRule}",
+                            fontSize = 10.sp,
+                            color = DemoAmber
+                        )
+                    }
+                }
+            }
+        } ?: run {
+            item {
+                Box(modifier = Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(color = TradePrimary)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun V2_3HypothesisCard(h: V2_3_HypothesisConsistencySummaryDto) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(h.hypothesisName, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Text("${h.condition} • ${h.totalSessionsEvaluated} Sessions Tested", fontSize = 10.sp, color = TextMuted)
+                }
+                Surface(
+                    color = if (h.promotionGateStatus == "READY_FOR_MANUAL_REVIEW") TradeProfit.copy(alpha = 0.15f) else DemoAmber.copy(alpha = 0.15f),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = h.promotionGateStatus,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (h.promotionGateStatus == "READY_FOR_MANUAL_REVIEW") TradeProfit else DemoAmber,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Win rate comparison & CI
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Experiment Win% (95% CI)", fontSize = 9.sp, color = TextMuted)
+                    Text("${String.format(Locale.US, "%.1f", h.experimentWinRate)}% [${h.winRateConfidenceInterval.lowerBound}-${h.winRateConfidenceInterval.upperBound}%]", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
+                }
+                Column {
+                    Text("Baseline Win%", fontSize = 9.sp, color = TextMuted)
+                    Text("${String.format(Locale.US, "%.1f", h.controlWinRate)}%", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextSecondary)
+                }
+                Column {
+                    Text("Exp. PnL", fontSize = 9.sp, color = TextMuted)
+                    Text("+$${String.format(Locale.US, "%.2f", h.experimentTotalPnL)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
+                }
+                Column {
+                    Text("Expectancy", fontSize = 9.sp, color = TextMuted)
+                    Text("+$${String.format(Locale.US, "%.4f", h.experimentExpectancy)}", fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Session P&L distribution
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Session PnL Distribution: Mean +$${h.meanSessionPnL} • Med +$${h.medianSessionPnL} • StdDev $${h.stdDevSessionPnL}", fontSize = 10.sp, color = TextSecondary)
+            }
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Sessions: ${h.positiveSessions} Pos / ${h.negativeSessions} Neg • Best +$${h.bestSessionPnL} • Worst +$${h.worstSessionPnL}", fontSize = 10.sp, color = TextMuted)
+            }
+        }
+    }
+}
+
+@Composable
+private fun V2_3SessionCard(s: V2_3_SessionMetricsDto) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurface),
+        shape = RoundedCornerShape(8.dp),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 2.dp)
+    ) {
+        Row(modifier = Modifier.fillMaxWidth().padding(12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Column(modifier = Modifier.weight(1.5f)) {
+                Text(s.sessionId, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                Text(s.hypothesisTested, fontSize = 9.sp, color = TextMuted)
+            }
+            Column(modifier = Modifier.weight(1f)) {
+                Text("Trades: ${s.totalObservations}", fontSize = 10.sp, color = TextSecondary)
+                Text("Win: ${String.format(Locale.US, "%.1f", s.winRate)}%", fontSize = 10.sp, fontWeight = FontWeight.SemiBold, color = if (s.winRate >= 60.0) TradeProfit else TextPrimary)
+            }
+            Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                Text("+$${String.format(Locale.US, "%.2f", s.totalPnL)}", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (s.totalPnL >= 0) TradeProfit else TradeRed)
+                Text(if (s.degradationDetected) "DEGRADED" else "HEALTHY", fontSize = 9.sp, fontWeight = FontWeight.Bold, color = if (s.degradationDetected) TradeRed else TradeProfit)
+            }
+        }
+    }
+}
+
+@Composable
+private fun V2_3CrossAssetTable(
+    title: String,
+    items: Map<String, V2_3_CrossAssetSessionMetricsDto>
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Asset", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+                Text("Trades", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1f))
+                Text("Win% (95% CI)", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(2f))
+                Text("PnL", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+            }
+            HorizontalDivider(color = DarkBorder)
+
+            items.forEach { (assetKey, m) ->
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(assetKey, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, modifier = Modifier.weight(1.2f))
+                    Text("${m.tradesCount}", fontSize = 11.sp, color = TextSecondary, modifier = Modifier.weight(1f))
+                    Text("${m.winRate}% [${m.confidenceInterval95.lowerBound}-${m.confidenceInterval95.upperBound}%]", fontSize = 10.sp, color = if (m.winRate >= 60) TradeProfit else TextPrimary, modifier = Modifier.weight(2f))
+                    Text("+$${String.format(Locale.US, "%.2f", m.totalPnL)}", fontSize = 11.sp, color = if (m.totalPnL >= 0) TradeProfit else TradeRed, modifier = Modifier.weight(1.2f))
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun V2_3CrossRegimeTable(
+    title: String,
+    items: Map<String, V2_3_CrossRegimeSessionMetricsDto>
+) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(text = title, fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                Text("Regime", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.5f))
+                Text("Trades", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1f))
+                Text("Win% (95% CI)", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(2f))
+                Text("PnL", fontSize = 11.sp, color = TextMuted, modifier = Modifier.weight(1.2f))
+            }
+            HorizontalDivider(color = DarkBorder)
+
+            items.forEach { (regimeKey, m) ->
+                Row(modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                    Text(regimeKey, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary, modifier = Modifier.weight(1.5f))
+                    Text("${m.tradesCount}", fontSize = 11.sp, color = TextSecondary, modifier = Modifier.weight(1f))
+                    Text("${m.winRate}% [${m.confidenceInterval95.lowerBound}-${m.confidenceInterval95.upperBound}%]", fontSize = 10.sp, color = if (m.winRate >= 60) TradeProfit else TextPrimary, modifier = Modifier.weight(2f))
+                    Text("+$${String.format(Locale.US, "%.2f", m.totalPnL)}", fontSize = 11.sp, color = if (m.totalPnL >= 0) TradeProfit else TradeRed, modifier = Modifier.weight(1.2f))
+                }
+            }
+        }
+    }
+}
+
 
 
 

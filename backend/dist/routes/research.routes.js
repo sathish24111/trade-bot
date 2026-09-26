@@ -31,6 +31,15 @@ router.get('/strategy-v2-2/breakdowns', research_controller_1.getStrategyV2_2Bre
 router.get('/strategy-v2-2/confidence-intervals', research_controller_1.getStrategyV2_2ConfidenceIntervals);
 router.get('/strategy-v2-2/oos-validation', research_controller_1.getStrategyV2_2OosValidation);
 router.post('/strategy-v2-2/collect-fresh-dataset', research_controller_1.collectFreshDatasetV2_2);
+// Strategy V2.3: Multi-Session Validation & Promotion Gate Research Module
+router.get('/strategy-v2-3/dashboard', research_controller_1.getStrategyV2_3MultiSessionDashboard);
+router.get('/strategy-v2-3/sessions', research_controller_1.getStrategyV2_3SessionsList);
+router.get('/strategy-v2-3/hypotheses', research_controller_1.getStrategyV2_3HypothesesSummary);
+router.get('/strategy-v2-3/cross-asset', research_controller_1.getStrategyV2_3CrossAsset);
+router.get('/strategy-v2-3/cross-regime', research_controller_1.getStrategyV2_3CrossRegime);
+router.get('/strategy-v2-3/oos-validation', research_controller_1.getStrategyV2_3OosValidation);
+router.get('/strategy-v2-3/promotion-gate', research_controller_1.getStrategyV2_3PromotionGate);
+router.post('/strategy-v2-3/collect-dataset', research_controller_1.collectMultiSessionDatasetV2_3);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

@@ -2162,6 +2162,183 @@ data class V2_2_FreshValidationDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// STRATEGY V2.3: MULTI-SESSION VALIDATION & PROMOTION GATE DTOs
+// ==========================================
+
+data class V2_3_DatasetMetadataDto(
+    val datasetId: String = "V2.3_MULTI_SESSION",
+    val totalObservations: Int = 0,
+    val totalSessions: Int = 0,
+    val startDate: String = "",
+    val endDate: String = "",
+    val assetsIncluded: List<String> = emptyList(),
+    val regimesIncluded: List<String> = emptyList(),
+    val disclaimer: String = ""
+)
+
+data class V2_3_OverviewMetricsDto(
+    val totalSessions: Int = 0,
+    val totalObservations: Int = 0,
+    val overallWinRate: Double = 0.0,
+    val overallPnL: Double = 0.0,
+    val overallExpectancy: Double = 0.0,
+    val overallProfitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val positiveSessionsCount: Int = 0,
+    val negativeSessionsCount: Int = 0,
+    val neutralSessionsCount: Int = 0
+)
+
+data class V2_3_SessionMetricsDto(
+    val sessionId: String = "",
+    val sessionIndex: Int = 0,
+    val sessionDate: String = "",
+    val hypothesisTested: String = "",
+    val totalObservations: Int = 0,
+    val acceptedTrades: Int = 0,
+    val rejectedSignals: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val waitPercentage: Double = 0.0,
+    val sessionOutcome: String = "NEUTRAL",
+    val degradationDetected: Boolean = false,
+    val degradationReason: String? = null
+)
+
+data class V2_3_HypothesisConsistencySummaryDto(
+    val hypothesisId: String = "",
+    val hypothesisName: String = "",
+    val controlVariant: String = "",
+    val experimentVariant: String = "",
+    val condition: String = "",
+    val totalSessionsEvaluated: Int = 0,
+    val positiveSessions: Int = 0,
+    val negativeSessions: Int = 0,
+    val neutralSessions: Int = 0,
+    val totalObservations: Int = 0,
+    val controlWinRate: Double = 0.0,
+    val experimentWinRate: Double = 0.0,
+    val controlTotalPnL: Double = 0.0,
+    val experimentTotalPnL: Double = 0.0,
+    val controlExpectancy: Double = 0.0,
+    val experimentExpectancy: Double = 0.0,
+    val experimentProfitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val meanSessionPnL: Double = 0.0,
+    val medianSessionPnL: Double = 0.0,
+    val stdDevSessionPnL: Double = 0.0,
+    val bestSessionPnL: Double = 0.0,
+    val worstSessionPnL: Double = 0.0,
+    val winRateConfidenceInterval: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val oosStatus: String = "OOS_VALIDATED",
+    val promotionGateStatus: String = "READY_FOR_MANUAL_REVIEW",
+    val promotionRationale: String = ""
+)
+
+data class V2_3_CrossAssetSessionMetricsDto(
+    val asset: String = "",
+    val tradesCount: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE"
+)
+
+data class V2_3_CrossRegimeSessionMetricsDto(
+    val regime: String = "",
+    val tradesCount: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE"
+)
+
+data class V2_3_FailureAnalysisRecordDto(
+    val sessionId: String = "",
+    val hypothesisId: String = "",
+    val tradeId: String = "",
+    val asset: String = "",
+    val regime: String = "",
+    val duration: String = "",
+    val score: Int = 0,
+    val indicatorConfirmations: List<String> = emptyList(),
+    val volatility: String = "",
+    val consecutiveLosses: Int = 0,
+    val diagnosis: String = ""
+)
+
+data class V2_3_GateDecisionCriteriaDto(
+    val multiSessionTested: Boolean = true,
+    val noSafetyViolations: Boolean = true,
+    val noLeakage: Boolean = true,
+    val oosPositive: Boolean = true,
+    val multiSessionConsistent: Boolean = true,
+    val crossAssetConsistent: Boolean = true,
+    val adequateSample: Boolean = true,
+    val drawdownAcceptable: Boolean = true
+)
+
+data class V2_3_GateDecisionDto(
+    val hypothesisId: String = "",
+    val hypothesisName: String = "",
+    val status: String = "READY_FOR_MANUAL_REVIEW",
+    val criteriaChecks: V2_3_GateDecisionCriteriaDto = V2_3_GateDecisionCriteriaDto(),
+    val decisionRationale: String = ""
+)
+
+data class V2_3_PromotionGateSummaryDto(
+    val productionStrategyStatus: String = "",
+    val gateDecisions: List<V2_3_GateDecisionDto> = emptyList(),
+    val governanceRule: String = ""
+)
+
+data class V2_3_HypothesesDto(
+    val hypothesisA: V2_3_HypothesisConsistencySummaryDto = V2_3_HypothesisConsistencySummaryDto(),
+    val hypothesisB: V2_3_HypothesisConsistencySummaryDto = V2_3_HypothesisConsistencySummaryDto(),
+    val hypothesisC: V2_3_HypothesisConsistencySummaryDto = V2_3_HypothesisConsistencySummaryDto()
+)
+
+data class V2_3_MultiSessionDashboardDto(
+    val datasetMetadata: V2_3_DatasetMetadataDto = V2_3_DatasetMetadataDto(),
+    val overview: V2_3_OverviewMetricsDto = V2_3_OverviewMetricsDto(),
+    val sessionsList: List<V2_3_SessionMetricsDto> = emptyList(),
+    val hypotheses: V2_3_HypothesesDto = V2_3_HypothesesDto(),
+    val crossAssetAnalysis: Map<String, V2_3_CrossAssetSessionMetricsDto> = emptyMap(),
+    val crossRegimeAnalysis: Map<String, V2_3_CrossRegimeSessionMetricsDto> = emptyMap(),
+    val oosValidation: V2_2_OOSValidationDto = V2_2_OOSValidationDto(),
+    val failureAnalysis: List<V2_3_FailureAnalysisRecordDto> = emptyList(),
+    val promotionGateSummary: V2_3_PromotionGateSummaryDto = V2_3_PromotionGateSummaryDto(),
+    val safetyStatus: Map<String, Any> = emptyMap(),
+    val disclaimer: String = ""
+)
+
+data class V2_3_MultiSessionDashboardResponse(
+    val success: Boolean,
+    val multiSessionDashboard: V2_3_MultiSessionDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
 
 
 

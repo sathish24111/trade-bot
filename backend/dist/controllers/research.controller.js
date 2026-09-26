@@ -128,6 +128,14 @@ exports.getStrategyV2_2Breakdowns = getStrategyV2_2Breakdowns;
 exports.getStrategyV2_2ConfidenceIntervals = getStrategyV2_2ConfidenceIntervals;
 exports.getStrategyV2_2OosValidation = getStrategyV2_2OosValidation;
 exports.collectFreshDatasetV2_2 = collectFreshDatasetV2_2;
+exports.getStrategyV2_3MultiSessionDashboard = getStrategyV2_3MultiSessionDashboard;
+exports.getStrategyV2_3SessionsList = getStrategyV2_3SessionsList;
+exports.getStrategyV2_3HypothesesSummary = getStrategyV2_3HypothesesSummary;
+exports.getStrategyV2_3CrossAsset = getStrategyV2_3CrossAsset;
+exports.getStrategyV2_3CrossRegime = getStrategyV2_3CrossRegime;
+exports.getStrategyV2_3OosValidation = getStrategyV2_3OosValidation;
+exports.getStrategyV2_3PromotionGate = getStrategyV2_3PromotionGate;
+exports.collectMultiSessionDatasetV2_3 = collectMultiSessionDatasetV2_3;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -1908,6 +1916,129 @@ async function collectFreshDatasetV2_2(req, res) {
             message: `Successfully collected ${freshTrades.length} fresh demo trades under dataset V2.2_FRESH.`,
             collectedCount: freshTrades.length,
             datasetId: 'V2.2_FRESH'
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+/**
+ * =====================================================================
+ * STRATEGY V2.3 MULTI-SESSION VALIDATION & PROMOTION GATE ENDPOINTS
+ * =====================================================================
+ */
+async function getStrategyV2_3MultiSessionDashboard(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            multiSessionDashboard: dashboard
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3SessionsList(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            sessionsList: dashboard.sessionsList,
+            totalSessions: dashboard.sessionsList.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3HypothesesSummary(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            hypotheses: dashboard.hypotheses
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3CrossAsset(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            crossAssetAnalysis: dashboard.crossAssetAnalysis
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3CrossRegime(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            crossRegimeAnalysis: dashboard.crossRegimeAnalysis
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3OosValidation(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            oosValidation: dashboard.oosValidation
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_3PromotionGate(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const dashboard = await v2_3_multiSessionService.getMultiSessionDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            promotionGateSummary: dashboard.promotionGateSummary
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function collectMultiSessionDatasetV2_3(req, res) {
+    try {
+        const { v2_3_multiSessionService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_3_multisession.service')));
+        const sessions = req.body.sessions ? Number(req.body.sessions) : 10;
+        const tradesPerSession = req.body.tradesPerSession ? Number(req.body.tradesPerSession) : 55;
+        const trades = await v2_3_multiSessionService.getOrSeedMultiSessionDataset(sessions, tradesPerSession);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            message: `Successfully generated ${trades.length} multi-session demo trades across ${sessions} sessions under dataset V2.3_MULTI_SESSION.`,
+            totalTrades: trades.length,
+            sessionsCount: sessions,
+            datasetId: 'V2.3_MULTI_SESSION'
         });
     }
     catch (err) {
