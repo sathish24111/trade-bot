@@ -9,6 +9,7 @@ import { derivDemoTradingService } from './trading/derivDemoTrading.service';
 import { derivMarketProvider } from './market/derivMarket.provider';
 import { strategyV2Service } from './strategy/strategyV2.service';
 import { paperJournalService } from './research/paperJournal.service';
+import { demoPromotionService } from './strategy/demoPromotion.service';
 import { StrategyV2SignalResult } from '../models/StrategyV2';
 import crypto from 'crypto';
 
@@ -258,7 +259,8 @@ export class PaperExecutionEngine {
     }
 
     // Determine Strategy Version and evaluate
-    const isV2 = session.strategy.toUpperCase().includes('V2');
+    const isAbcCombo = session.strategy.toUpperCase().includes('ABC') || session.strategy.toUpperCase().includes('COMBO');
+    const isV2 = session.strategy.toUpperCase().includes('V2') || isAbcCombo;
     let tradeDirection: 'BUY' | 'SELL' | 'WAIT' = 'WAIT';
     let signalScore = 50;
     let signalId = `SIG-${Date.now()}`;
@@ -267,8 +269,66 @@ export class PaperExecutionEngine {
     let scoreBreakdown: any = {};
     let indicatorValues: any = asset.indicators;
     let strategyResultReason = '';
+    let contractDuration = 5;
+    let durationUnit: 't' | 's' = 't';
+    let durationSeconds = 5;
 
-    if (isV2) {
+    if (isAbcCombo) {
+      // Full ABC_COMBO evaluation with promoted rules
+      let candles = await derivMarketProvider.getCandles(targetSymbol, '1m', 50);
+      if (!candles || candles.length < 20) {
+        candles = await marketService.getCandles(targetSymbol, '1m', 50);
+      }
+
+      const comboSignal = demoPromotionService.evaluateSignal(candles, asset.indicators);
+      regime = comboSignal.regime;
+      signalScore = comboSignal.score;
+      scoreBreakdown = comboSignal.scoreBreakdown;
+      signalFingerprint = comboSignal.fingerprint;
+      indicatorValues = comboSignal.indicators;
+      contractDuration = comboSignal.contractDuration;
+      durationUnit = comboSignal.durationUnit;
+      durationSeconds = comboSignal.durationSeconds;
+      strategyResultReason = comboSignal.reasons.slice(0, 2).join('; ');
+
+      if (comboSignal.signal === 'WAIT') {
+        if (comboSignal.filterReason) {
+          active.logs.push(`[${this.formatTime()}] [ABC_COMBO] Filtered: ${comboSignal.filterReason}`);
+        } else if (comboSignal.isCandidate) {
+          active.logs.push(`[${this.formatTime()}] [ABC_COMBO] Candidate signal detected (Score: ${comboSignal.score}/100, Regime: ${regime}). Awaiting confluence.`);
+        }
+        return;
+      }
+
+      // Pre-trade circuit verification
+      const circuitCheck = demoPromotionService.verifyPreTradeCircuits({
+        symbol: targetSymbol,
+        tradeAmount: riskService.calculateTradeAmount(session.investment_amount, session.risk_level),
+        currentDailyPnL: session.current_pnl,
+        peakBalance: session.starting_balance,
+        currentBalance: session.starting_balance + session.current_pnl,
+        fingerprint: signalFingerprint
+      });
+
+      if (!circuitCheck.allowed) {
+        active.logs.push(`[${this.formatTime()}] [Safety Circuit] ${circuitCheck.reason}`);
+        return;
+      }
+
+      // Cooldown
+      const now = Date.now();
+      if (active.lastExecutedSignalTime > 0 && (now - active.lastExecutedSignalTime) < active.cooldownSeconds * 1000) {
+        return;
+      }
+
+      // Fingerprint deduplication
+      if (signalFingerprint && signalFingerprint === active.lastExecutedFingerprint) {
+        active.logs.push(`[${this.formatTime()}] Duplicate signal fingerprint (${signalFingerprint.slice(0, 10)}...) suppressed.`);
+        return;
+      }
+
+      tradeDirection = comboSignal.signal;
+    } else if (isV2) {
       // Fetch candles for full multi-bar Strategy V2 evaluation
       let candles = await derivMarketProvider.getCandles(targetSymbol, '1m', 50);
       if (!candles || candles.length < 20) {
@@ -295,7 +355,6 @@ export class PaperExecutionEngine {
       // 1. Anti-Overtrading: Check Cooldown
       const now = Date.now();
       if (active.lastExecutedSignalTime > 0 && (now - active.lastExecutedSignalTime) < active.cooldownSeconds * 1000) {
-        const remainingCd = Math.ceil((active.cooldownSeconds * 1000 - (now - active.lastExecutedSignalTime)) / 1000);
         return; // Suppress trade during active cooldown window
       }
 
@@ -348,14 +407,14 @@ export class PaperExecutionEngine {
             if (derivSymbol === 'EURUSD') derivSymbol = 'frxEURUSD';
             if (derivSymbol === 'GBPUSD') derivSymbol = 'frxGBPUSD';
 
-            active.logs.push(`[${this.formatTime()}] [${session.strategy}] Deriv Demo proposal for ${derivSymbol} (${contractType}, Score: ${signalScore})...`);
+            active.logs.push(`[${this.formatTime()}] [${session.strategy}] Deriv Demo proposal for ${derivSymbol} (${contractType}, Score: ${signalScore}, Duration: ${contractDuration}${durationUnit})...`);
 
             const proposal = await derivDemoTradingService.getProposal(
               derivSymbol,
               tradeAmount,
               contractType,
-              5,
-              't'
+              contractDuration,
+              durationUnit
             );
 
             active.logs.push(`[${this.formatTime()}] Purchasing Deriv Demo virtual contract #${proposal.proposalId} (Ask: $${proposal.askPrice})...`);
@@ -401,10 +460,11 @@ export class PaperExecutionEngine {
             );
 
             // Record in rich Paper Trade Journal
+            const strategyVer = isAbcCombo ? 'ABC_COMBO' : (isV2 ? 'STRATEGY_V2' : 'STRATEGY_V1');
             await paperJournalService.recordEntry({
               id: paperTrade.id,
               signalId,
-              strategyVersion: isV2 ? 'STRATEGY_V2' : 'STRATEGY_V1',
+              strategyVersion: strategyVer,
               sessionId,
               userId: session.user_id,
               symbol: targetSymbol,
@@ -415,8 +475,8 @@ export class PaperExecutionEngine {
               indicatorValues,
               entryPrice: proposal.spot,
               exitPrice: proposal.spot,
-              contractDuration: 5,
-              durationSeconds: 5,
+              contractDuration,
+              durationSeconds,
               payout: isWin ? proposal.payout : 0,
               pnl,
               result: isWin ? 'WIN' : 'LOSS',
@@ -424,6 +484,37 @@ export class PaperExecutionEngine {
               riskChecksPassed: true,
               createdAt: new Date()
             });
+
+            if (isAbcCombo) {
+              demoPromotionService.recordDemoTrade({
+                tradeId: paperTrade.id,
+                strategyVersion: 'ABC_COMBO',
+                asset: targetSymbol,
+                regime,
+                signalScore,
+                indicatorsSnapshot: {
+                  price: proposal.spot,
+                  ema21: indicatorValues.ema21 || 0,
+                  sma50: indicatorValues.sma50 || 0,
+                  rsi14: indicatorValues.rsi14 || 0,
+                  macdHistogram: indicatorValues.macd?.histogram || 0,
+                  bollingerPercentB: 0.5,
+                  atr14: indicatorValues.atr14 || 0
+                },
+                duration: `${contractDuration} ${durationUnit === 's' ? 'seconds' : 'ticks'}`,
+                durationSeconds,
+                entryPrice: proposal.spot,
+                exitPrice: proposal.spot,
+                stake: tradeAmount,
+                payout: isWin ? proposal.payout : 0,
+                pnl,
+                result: isWin ? 'WIN' : 'LOSS',
+                timestamp: new Date().toISOString(),
+                sessionId,
+                dataQuality: 'HEALTHY',
+                riskChecksPassed: true
+              });
+            }
 
             const derivBal = parseFloat((parseFloat(result.balanceAfter) + (isWin ? proposal.payout : 0)).toFixed(2));
             derivDemoTradingService.getAccountInfo().balance = derivBal;
@@ -517,10 +608,11 @@ export class PaperExecutionEngine {
         );
 
         // Record in rich Paper Trade Journal
+        const fallbackStrategyVer = isAbcCombo ? 'ABC_COMBO' : (isV2 ? 'STRATEGY_V2' : 'STRATEGY_V1');
         await paperJournalService.recordEntry({
           id: paperTrade.id,
           signalId,
-          strategyVersion: isV2 ? 'STRATEGY_V2' : 'STRATEGY_V1',
+          strategyVersion: fallbackStrategyVer,
           sessionId,
           userId: session.user_id,
           symbol: asset.symbol,
@@ -531,8 +623,8 @@ export class PaperExecutionEngine {
           indicatorValues,
           entryPrice,
           exitPrice,
-          contractDuration: 5,
-          durationSeconds: 5,
+          contractDuration,
+          durationSeconds,
           payout: isWin ? tradeAmount + pnl : 0,
           pnl,
           result: isWin ? 'WIN' : 'LOSS',
@@ -540,6 +632,37 @@ export class PaperExecutionEngine {
           riskChecksPassed: true,
           createdAt: new Date()
         });
+
+        if (isAbcCombo) {
+          demoPromotionService.recordDemoTrade({
+            tradeId: paperTrade.id,
+            strategyVersion: 'ABC_COMBO',
+            asset: asset.symbol,
+            regime,
+            signalScore,
+            indicatorsSnapshot: {
+              price: entryPrice,
+              ema21: indicatorValues.ema21 || 0,
+              sma50: indicatorValues.sma50 || 0,
+              rsi14: indicatorValues.rsi14 || 0,
+              macdHistogram: indicatorValues.macd?.histogram || 0,
+              bollingerPercentB: 0.5,
+              atr14: indicatorValues.atr14 || 0
+            },
+            duration: `${contractDuration} ${durationUnit === 's' ? 'seconds' : 'ticks'}`,
+            durationSeconds,
+            entryPrice,
+            exitPrice,
+            stake: tradeAmount,
+            payout: isWin ? tradeAmount + pnl : 0,
+            pnl,
+            result: isWin ? 'WIN' : 'LOSS',
+            timestamp: new Date().toISOString(),
+            sessionId,
+            dataQuality: 'HEALTHY',
+            riskChecksPassed: true
+          });
+        }
 
         // 2. Update user demo balance in MySQL
         await pool.query(

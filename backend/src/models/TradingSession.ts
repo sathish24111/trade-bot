@@ -1,6 +1,6 @@
 export type SessionStatus = 'IDLE' | 'STARTING' | 'RUNNING' | 'STOPPING' | 'COMPLETED';
 export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
-export type StrategyName = 'EMA_RSI' | 'MACD' | 'BOLLINGER_BANDS' | 'MULTI_INDICATOR';
+export type StrategyName = 'EMA_RSI' | 'MACD' | 'BOLLINGER_BANDS' | 'MULTI_INDICATOR' | 'STRATEGY_V2' | 'ABC_COMBO';
 
 export interface TradingSession {
   id: string;

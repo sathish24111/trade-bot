@@ -1,8 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.strategyEngine = exports.StrategyEngine = exports.StrategyV2_Strategy = exports.MultiIndicator_Strategy = exports.Bollinger_Strategy = exports.MACD_Strategy = exports.EMA_RSI_Strategy = void 0;
+exports.strategyEngine = exports.StrategyEngine = exports.ABC_COMBO_Strategy = exports.StrategyV2_Strategy = exports.MultiIndicator_Strategy = exports.Bollinger_Strategy = exports.MACD_Strategy = exports.EMA_RSI_Strategy = void 0;
 const indicator_service_1 = require("./indicator.service");
 const strategyV2_service_1 = require("./strategy/strategyV2.service");
+const demoPromotion_service_1 = require("./strategy/demoPromotion.service");
 const STRATEGY_DISCLAIMER = 'Strategy confidence and metrics are algorithmically computed in DEMO/PAPER mode. No signal guarantees profit.';
 // 1. EMA + RSI Strategy
 class EMA_RSI_Strategy {
@@ -146,7 +147,7 @@ class MACD_Strategy {
         if (macd.histogram > 0 || macd.value >= macd.signal) {
             signal = 'BUY';
             confidence = Math.min(86, 68 + Math.round(Math.min(18, Math.abs(macd.histogram) * 120)));
-            reason = `Bullish MACD: Line (${macd.value}) above signal (${macd.signal}) with positive histogram (${macd.histogram})`;
+            reason = `Bullish MACD: Line (${macd.value}) crossed above signal (${macd.signal}) with positive histogram (${macd.histogram})`;
         }
         else {
             signal = 'SELL';
@@ -356,6 +357,59 @@ class StrategyV2_Strategy {
     }
 }
 exports.StrategyV2_Strategy = StrategyV2_Strategy;
+// 6. Strategy ABC_COMBO - Promoted Quality-First Adaptive Strategy
+class ABC_COMBO_Strategy {
+    id = 'ABC_COMBO';
+    name = 'ABC_COMBO';
+    description = 'Promoted DEMO Adaptive Strategy: High Volatility 30s duration, Ranging MACD + Bollinger %B confluence, and Low-Regime Score >= 80 threshold';
+    defaultParameters = {
+        minSignalScore: 80,
+        cooldownSeconds: 30,
+        minConfirmations: 3,
+        minPriceMovement: 0.0002,
+        rsiOversold: 30,
+        rsiOverbought: 70
+    };
+    parameterDefinitions = [
+        { key: 'minSignalScore', label: 'Minimum Signal Score', type: 'number', defaultValue: 80, min: 70, max: 95, step: 5 },
+        { key: 'cooldownSeconds', label: 'Cooldown Period (Seconds)', type: 'number', defaultValue: 30, min: 10, max: 120, step: 5 },
+        { key: 'minConfirmations', label: 'Minimum Indicator Confirmations', type: 'number', defaultValue: 3, min: 2, max: 5, step: 1 },
+        { key: 'minPriceMovement', label: 'Min Price Movement (%)', type: 'number', defaultValue: 0.0002, min: 0.0001, max: 0.005, step: 0.0001 }
+    ];
+    generateSignal(candles, indicators, parameters) {
+        const promoResult = demoPromotion_service_1.demoPromotionService.evaluateSignal(candles, indicators, parameters);
+        return {
+            signal: promoResult.signal,
+            confidence: promoResult.score,
+            reason: `[Regime: ${promoResult.regime}, Score: ${promoResult.score}/100, Duration: ${promoResult.durationSeconds}s] ${promoResult.reasons.slice(0, 2).join('; ')}`,
+            indicators: promoResult.indicators,
+            disclaimer: promoResult.disclaimer,
+            parametersUsed: parameters
+        };
+    }
+    evaluate(price, indicators, parameters) {
+        const syntheticCandles = [
+            {
+                timestamp: Date.now() - 120000,
+                open: price * 0.999,
+                high: price * 1.001,
+                low: price * 0.998,
+                close: price * 0.9995,
+                volume: 100
+            },
+            {
+                timestamp: Date.now() - 60000,
+                open: price * 0.9995,
+                high: price * 1.0015,
+                low: price * 0.999,
+                close: price,
+                volume: 150
+            }
+        ];
+        return this.generateSignal(syntheticCandles, indicators, parameters);
+    }
+}
+exports.ABC_COMBO_Strategy = ABC_COMBO_Strategy;
 // Strategy Engine
 class StrategyEngine {
     strategies = new Map();
@@ -365,6 +419,7 @@ class StrategyEngine {
         this.register(new Bollinger_Strategy());
         this.register(new MultiIndicator_Strategy());
         this.register(new StrategyV2_Strategy());
+        this.register(new ABC_COMBO_Strategy());
     }
     register(strategy) {
         this.strategies.set(strategy.id.toUpperCase(), strategy);

@@ -7,7 +7,7 @@ import { RiskLevel, StrategyName } from '../models/TradingSession';
 const startSessionSchema = z.object({
   investmentAmount: z.number().positive('Investment amount must be positive'),
   asset: z.string().optional().default('R_100'),
-  strategy: z.enum(['EMA_RSI', 'MACD', 'BOLLINGER_BANDS', 'MULTI_INDICATOR']),
+  strategy: z.enum(['EMA_RSI', 'MACD', 'BOLLINGER_BANDS', 'MULTI_INDICATOR', 'STRATEGY_V2', 'ABC_COMBO']),
   riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH']),
   duration: z.number().int().min(1).max(240).default(30)
 });

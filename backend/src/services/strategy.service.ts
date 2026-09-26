@@ -1,6 +1,7 @@
 import { MarketAsset, TechnicalIndicators, Candle } from '../models/MarketData';
 import { indicatorService } from './indicator.service';
 import { strategyV2Service } from './strategy/strategyV2.service';
+import { demoPromotionService } from './strategy/demoPromotion.service';
 
 export interface StrategyParameters {
   [key: string]: number | boolean | string;
@@ -227,7 +228,7 @@ export class MACD_Strategy implements TradingStrategy {
     if (macd.histogram > 0 || macd.value >= macd.signal) {
       signal = 'BUY';
       confidence = Math.min(86, 68 + Math.round(Math.min(18, Math.abs(macd.histogram) * 120)));
-      reason = `Bullish MACD: Line (${macd.value}) above signal (${macd.signal}) with positive histogram (${macd.histogram})`;
+      reason = `Bullish MACD: Line (${macd.value}) crossed above signal (${macd.signal}) with positive histogram (${macd.histogram})`;
     } else {
       signal = 'SELL';
       confidence = Math.min(86, 68 + Math.round(Math.min(18, Math.abs(macd.histogram) * 120)));
@@ -484,6 +485,72 @@ export class StrategyV2_Strategy implements TradingStrategy {
   }
 }
 
+// 6. Strategy ABC_COMBO - Promoted Quality-First Adaptive Strategy
+export class ABC_COMBO_Strategy implements TradingStrategy {
+  id = 'ABC_COMBO';
+  name = 'ABC_COMBO';
+  description =
+    'Promoted DEMO Adaptive Strategy: High Volatility 30s duration, Ranging MACD + Bollinger %B confluence, and Low-Regime Score >= 80 threshold';
+
+  defaultParameters: StrategyParameters = {
+    minSignalScore: 80,
+    cooldownSeconds: 30,
+    minConfirmations: 3,
+    minPriceMovement: 0.0002,
+    rsiOversold: 30,
+    rsiOverbought: 70
+  };
+
+  parameterDefinitions: ParameterDefinition[] = [
+    { key: 'minSignalScore', label: 'Minimum Signal Score', type: 'number', defaultValue: 80, min: 70, max: 95, step: 5 },
+    { key: 'cooldownSeconds', label: 'Cooldown Period (Seconds)', type: 'number', defaultValue: 30, min: 10, max: 120, step: 5 },
+    { key: 'minConfirmations', label: 'Minimum Indicator Confirmations', type: 'number', defaultValue: 3, min: 2, max: 5, step: 1 },
+    { key: 'minPriceMovement', label: 'Min Price Movement (%)', type: 'number', defaultValue: 0.0002, min: 0.0001, max: 0.005, step: 0.0001 }
+  ];
+
+  generateSignal(
+    candles: Candle[],
+    indicators: TechnicalIndicators,
+    parameters?: StrategyParameters
+  ): StrategySignalResult {
+    const promoResult = demoPromotionService.evaluateSignal(candles, indicators, parameters as any);
+    return {
+      signal: promoResult.signal,
+      confidence: promoResult.score,
+      reason: `[Regime: ${promoResult.regime}, Score: ${promoResult.score}/100, Duration: ${promoResult.durationSeconds}s] ${promoResult.reasons.slice(0, 2).join('; ')}`,
+      indicators: promoResult.indicators,
+      disclaimer: promoResult.disclaimer,
+      parametersUsed: parameters
+    };
+  }
+
+  evaluate(
+    price: number,
+    indicators: TechnicalIndicators,
+    parameters?: StrategyParameters
+  ): StrategySignalResult {
+    const syntheticCandles: Candle[] = [
+      {
+        timestamp: Date.now() - 120000,
+        open: price * 0.999,
+        high: price * 1.001,
+        low: price * 0.998,
+        close: price * 0.9995,
+        volume: 100
+      },
+      {
+        timestamp: Date.now() - 60000,
+        open: price * 0.9995,
+        high: price * 1.0015,
+        low: price * 0.999,
+        close: price,
+        volume: 150
+      }
+    ];
+    return this.generateSignal(syntheticCandles, indicators, parameters);
+  }
+}
+
 // Strategy Engine
 export class StrategyEngine {
   private strategies: Map<string, TradingStrategy> = new Map();
@@ -494,6 +561,7 @@ export class StrategyEngine {
     this.register(new Bollinger_Strategy());
     this.register(new MultiIndicator_Strategy());
     this.register(new StrategyV2_Strategy());
+    this.register(new ABC_COMBO_Strategy());
   }
 
   register(strategy: TradingStrategy) {

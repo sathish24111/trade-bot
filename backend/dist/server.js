@@ -43,6 +43,7 @@ const database_1 = require("./config/database");
 const websocket_server_1 = require("./websocket/websocket.server");
 const configValidation_service_1 = require("./services/security/configValidation.service");
 const paperSafety_service_1 = require("./services/security/paperSafety.service");
+const demoPromotion_service_1 = require("./services/strategy/demoPromotion.service");
 const logger_service_1 = require("./services/monitoring/logger.service");
 async function bootstrap() {
     try {
@@ -50,7 +51,9 @@ async function bootstrap() {
         configValidation_service_1.configValidationService.validateStartupConfig();
         // 2. Centralized Paper Safety Guard
         paperSafety_service_1.paperSafetyService.verifySafetyOrThrow();
-        logger_service_1.logger.info('SECURITY', 'STARTUP_SAFETY_VERIFIED', 'TRADING_MODE=PAPER verified. Broker execution disabled.');
+        // 3. Promoted ABC_COMBO Demo Strategy Startup Safety Gate
+        demoPromotion_service_1.demoPromotionService.verifyStartupSafetyGate();
+        logger_service_1.logger.info('SECURITY', 'STARTUP_SAFETY_VERIFIED', 'TRADING_MODE=PAPER and ACTIVE_STRATEGY=ABC_COMBO verified. Broker execution disabled.');
         console.log('[Database] Connecting and running schema migrations on MySQL...');
         await (0, database_1.initDatabase)();
         console.log('[Database] Schema verified and demo data seeded (bcrypt hash secured).');

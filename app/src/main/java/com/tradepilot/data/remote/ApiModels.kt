@@ -2781,12 +2781,192 @@ data class V2_5_FinalValidationDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// DEMO PROMOTION: ACTIVE ABC_COMBO DTOs
+// ==========================================
 
+data class ActiveStrategyConfigDto(
+    val activeStrategy: String = "ABC_COMBO",
+    val executionMode: String = "DEMO",
+    val realMoneyEnabled: Boolean = false,
+    val previousBaseline: String = "STRATEGY_V2",
+    val promotedAt: String = "",
+    val promotedBy: String = "",
+    val status: String = "ACTIVE_PROMOTED",
+    val version: String = "2.5.0-PROMOTED",
+    val description: String = ""
+)
 
+data class AbcComboRulesConfigDto(
+    val highVolatilityDurationSeconds: Int = 30,
+    val highVolatilityDurationType: String = "s",
+    val standardDurationTicks: Int = 5,
+    val standardDurationType: String = "t",
+    val rangingMacdConfirmationRequired: Boolean = true,
+    val rangingBollingerBandRequired: Boolean = true,
+    val rangingBollingerBuyThreshold: Double = 0.15,
+    val rangingBollingerSellThreshold: Double = 0.85,
+    val lowRegimeMinScore: Int = 80,
+    val lowRegimes: List<String> = listOf("RANGING", "COMPRESSION")
+)
 
+data class CircuitCheckDto(
+    val limit: Double = 0.0,
+    val active: Boolean = true,
+    val current: Double = 0.0,
+    val breached: Boolean = false
+)
 
+data class SafetyCircuitsStatusDto(
+    val dailyLossLimit: CircuitCheckDto = CircuitCheckDto(50.0, true, 0.0, false),
+    val drawdownBreaker: CircuitCheckDto = CircuitCheckDto(15.0, true, 0.0, false),
+    val consecutiveLossBreaker: CircuitCheckDto = CircuitCheckDto(5.0, true, 0.0, false),
+    val positionLockActive: Boolean = true,
+    val cooldownActive: Boolean = true,
+    val signalDeduplicationActive: Boolean = true,
+    val dataQualityGateActive: Boolean = true,
+    val demoPaperEnforcement: Boolean = true,
+    val allCircuitsActive: Boolean = true,
+    val allCircuitsIntact: Boolean = true
+)
 
+data class StartupSafetyGateCheckDto(
+    val name: String = "",
+    val passed: Boolean = true,
+    val details: String = ""
+)
 
+data class StartupSafetyGateResultDto(
+    val executionMode: String = "DEMO",
+    val realMoneyEnabled: Boolean = false,
+    val activeStrategy: String = "ABC_COMBO",
+    val riskControls: String = "ENABLED",
+    val passed: Boolean = true,
+    val checks: List<StartupSafetyGateCheckDto> = emptyList(),
+    val timestamp: String = ""
+)
 
+data class IndicatorsSnapshotDto(
+    val price: Double = 0.0,
+    val ema21: Double = 0.0,
+    val sma50: Double = 0.0,
+    val rsi14: Double = 0.0,
+    val macdHistogram: Double = 0.0,
+    val bollingerPercentB: Double = 0.0,
+    val atr14: Double = 0.0
+)
 
+data class DemoTradeRecordDto(
+    val tradeId: String = "",
+    val strategyVersion: String = "ABC_COMBO",
+    val asset: String = "",
+    val regime: String = "",
+    val signalScore: Int = 0,
+    val indicatorsSnapshot: IndicatorsSnapshotDto = IndicatorsSnapshotDto(),
+    val duration: String = "",
+    val durationSeconds: Int = 5,
+    val entryPrice: Double = 0.0,
+    val exitPrice: Double = 0.0,
+    val stake: Double = 1.0,
+    val payout: Double = 0.0,
+    val pnl: Double = 0.0,
+    val result: String = "WIN",
+    val timestamp: String = "",
+    val sessionId: String = "",
+    val dataQuality: String = "HEALTHY",
+    val riskChecksPassed: Boolean = true,
+    val filterReason: String? = null
+)
 
+data class PostPromotionCategoryDto(
+    val trades: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val pnl: Double = 0.0,
+    val expectancy: Double = 0.0
+)
+
+data class PostPromotionMonitoringDto(
+    val targetTrades: Int = 200,
+    val evaluatedOpportunities: Int = 0,
+    val acceptedTrades: Int = 0,
+    val filteredTrades: Int = 0,
+    val filterRate: Double = 0.0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val currentConsecutiveLosses: Int = 0,
+    val assetBreakdown: Map<String, PostPromotionCategoryDto> = emptyMap(),
+    val regimeBreakdown: Map<String, PostPromotionCategoryDto> = emptyMap(),
+    val recentTrades: List<DemoTradeRecordDto> = emptyList(),
+    val status: String = "MONITORING_IN_PROGRESS"
+)
+
+data class RollbackEventDto(
+    val id: String = "",
+    val timestamp: String = "",
+    val action: String = "ROLLBACK_TO_V2",
+    val reason: String = "",
+    val triggeredBy: String = "",
+    val activeStrategyAfter: String = "STRATEGY_V2"
+)
+
+data class DemoPromotionSummaryDto(
+    val acceptedTrades: Int = 0,
+    val targetTrades: Int = 200,
+    val winRate: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val totalPnL: Double = 0.0
+)
+
+data class DemoPromotionStatusDto(
+    val config: ActiveStrategyConfigDto = ActiveStrategyConfigDto(),
+    val rules: AbcComboRulesConfigDto = AbcComboRulesConfigDto(),
+    val safetyCircuits: SafetyCircuitsStatusDto = SafetyCircuitsStatusDto(),
+    val startupSafetyGate: StartupSafetyGateResultDto = StartupSafetyGateResultDto(),
+    val monitoringSummary: DemoPromotionSummaryDto = DemoPromotionSummaryDto(),
+    val rollbackAvailable: Boolean = true,
+    val recentRollbackEvents: List<RollbackEventDto> = emptyList(),
+    val disclaimer: String = ""
+)
+
+data class DemoPromotionStatusResponse(
+    val success: Boolean,
+    val config: ActiveStrategyConfigDto? = null,
+    val rules: AbcComboRulesConfigDto? = null,
+    val safetyCircuits: SafetyCircuitsStatusDto? = null,
+    val startupSafetyGate: StartupSafetyGateResultDto? = null,
+    val monitoringSummary: DemoPromotionSummaryDto? = null,
+    val rollbackAvailable: Boolean = true,
+    val recentRollbackEvents: List<RollbackEventDto> = emptyList(),
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+data class PostPromotionMonitoringResponse(
+    val success: Boolean,
+    val monitoring: PostPromotionMonitoringDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+data class RollbackActionResponse(
+    val success: Boolean,
+    val message: String? = null,
+    val event: RollbackEventDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)

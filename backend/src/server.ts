@@ -6,6 +6,7 @@ import { initWebSocketServer } from './websocket/websocket.server';
 
 import { configValidationService } from './services/security/configValidation.service';
 import { paperSafetyService } from './services/security/paperSafety.service';
+import { demoPromotionService } from './services/strategy/demoPromotion.service';
 import { logger } from './services/monitoring/logger.service';
 
 async function bootstrap() {
@@ -16,7 +17,10 @@ async function bootstrap() {
     // 2. Centralized Paper Safety Guard
     paperSafetyService.verifySafetyOrThrow();
 
-    logger.info('SECURITY', 'STARTUP_SAFETY_VERIFIED', 'TRADING_MODE=PAPER verified. Broker execution disabled.');
+    // 3. Promoted ABC_COMBO Demo Strategy Startup Safety Gate
+    demoPromotionService.verifyStartupSafetyGate();
+
+    logger.info('SECURITY', 'STARTUP_SAFETY_VERIFIED', 'TRADING_MODE=PAPER and ACTIVE_STRATEGY=ABC_COMBO verified. Broker execution disabled.');
 
     console.log('[Database] Connecting and running schema migrations on MySQL...');
     await initDatabase();

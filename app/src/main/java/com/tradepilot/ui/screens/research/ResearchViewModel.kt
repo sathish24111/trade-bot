@@ -36,6 +36,8 @@ data class ResearchUiState(
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
     val v2_5FinalValidationDashboard: V2_5_FinalValidationDashboardDto? = null,
+    val demoPromotionStatus: DemoPromotionStatusDto? = null,
+    val postPromotionMonitoring: PostPromotionMonitoringDto? = null,
     val v2_4CombinationDashboard: V2_4_CombinationDashboardDto? = null,
     val v2_3MultiSessionDashboard: V2_3_MultiSessionDashboardDto? = null,
     val v2_2FreshDashboard: V2_2_FreshValidationDashboardDto? = null,
@@ -64,7 +66,8 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load V2.5 Final Validation, V2.4 Combination Lab, V2.3 Multi-Session Lab, V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        // Automatically load ABC_COMBO Demo Promotion, V2.5 Final Validation, V2.4 Combination Lab, V2.3 Multi-Session Lab, V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        loadDemoPromotion()
         loadV2_5FinalValidationDashboard()
         loadV2_4CombinationDashboard()
         loadV2_3MultiSessionDashboard()
@@ -76,8 +79,9 @@ class ResearchViewModel(
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
-        if (tab == ResearchTab.V2_5_FINAL_VALIDATION && _uiState.value.v2_5FinalValidationDashboard == null) {
-            loadV2_5FinalValidationDashboard()
+        if (tab == ResearchTab.V2_5_FINAL_VALIDATION) {
+            if (_uiState.value.v2_5FinalValidationDashboard == null) loadV2_5FinalValidationDashboard()
+            if (_uiState.value.demoPromotionStatus == null) loadDemoPromotion()
         }
         if (tab == ResearchTab.V2_4_COMBINATION_LAB && _uiState.value.v2_4CombinationDashboard == null) {
             loadV2_4CombinationDashboard()
@@ -327,11 +331,23 @@ class ResearchViewModel(
         val s = _uiState.value
         _uiState.value = s.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
+            loadDemoPromotion()
             val result = repository.getV2_5FinalValidationDashboard()
             result.onSuccess { data ->
                 _uiState.value = _uiState.value.copy(isLoading = false, v2_5FinalValidationDashboard = data)
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.5 final validation dashboard")
+            }
+        }
+    }
+
+    fun loadDemoPromotion() {
+        viewModelScope.launch {
+            repository.getDemoPromotionStatus().onSuccess { s ->
+                _uiState.value = _uiState.value.copy(demoPromotionStatus = s)
+            }
+            repository.getDemoPromotionMonitoring().onSuccess { m ->
+                _uiState.value = _uiState.value.copy(postPromotionMonitoring = m)
             }
         }
     }

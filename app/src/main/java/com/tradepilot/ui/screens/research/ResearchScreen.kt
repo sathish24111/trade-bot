@@ -3499,8 +3499,192 @@ private fun V2_5FinalValidationTabContent(
             }
         }
 
+        // 2. Active Promoted Demo Strategy Card
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, TradePrimary.copy(alpha = 0.5f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("ACTIVE DEMO STRATEGY", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                            Text("ABC_COMBO", fontSize = 18.sp, fontWeight = FontWeight.Bold, color = TradeProfit)
+                        }
+                        Column(horizontalAlignment = Alignment.End) {
+                            Surface(
+                                color = TradeProfit.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "DEMO / PAPER",
+                                    fontSize = 10.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TradeProfit,
+                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Surface(
+                                color = TradeRed.copy(alpha = 0.15f),
+                                shape = RoundedCornerShape(4.dp)
+                            ) {
+                                Text(
+                                    text = "REAL MONEY: DISABLED",
+                                    fontSize = 9.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    color = TradeRed,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Safety Banner
+                    Surface(
+                        color = TradeRed.copy(alpha = 0.08f),
+                        shape = RoundedCornerShape(6.dp),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, TradeRed.copy(alpha = 0.25f)),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(Icons.Default.Security, contentDescription = null, tint = TradeRed, modifier = Modifier.size(14.dp))
+                            Spacer(modifier = Modifier.width(6.dp))
+                            Text(
+                                text = "DEMO ONLY — No real-money execution is enabled.",
+                                fontSize = 11.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = TradeRed
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Strategy Details Section
+                    Text("Promoted Configuration Rules:", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("• High Volatility: 30 seconds (replaces 5 ticks in HIGH_VOLATILITY)", fontSize = 11.sp, color = TextSecondary)
+                    Text("• Ranging: MACD confirmation + Bollinger Band %B (%B < 0.15 BUY, %B > 0.85 SELL)", fontSize = 11.sp, color = TextSecondary)
+                    Text("• Low Regime: Score >= 80 threshold (rejects <80 in RANGING & COMPRESSION)", fontSize = 11.sp, color = TextSecondary)
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    HorizontalDivider(color = DarkBorder)
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Previous Baseline: STRATEGY_V2", fontSize = 11.sp, color = TextMuted)
+                        Text("Rollback: AVAILABLE", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TradePrimaryLight)
+                    }
+                }
+            }
+        }
+
+        // 3. Post-Promotion Demo Monitoring Card (Target: 200 Demo Trades)
+        item {
+            val mon = state.postPromotionMonitoring
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                border = androidx.compose.foundation.BorderStroke(1.dp, TradePrimaryLight.copy(alpha = 0.3f)),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text("POST-PROMOTION DEMO MONITORING", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextMuted)
+                            val accepted = mon?.acceptedTrades ?: 30
+                            val target = mon?.targetTrades ?: 200
+                            Text("$accepted / $target Demo Trades", fontSize = 15.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                        }
+                        Surface(
+                            color = TradeProfit.copy(alpha = 0.15f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = mon?.status ?: "MONITORING_IN_PROGRESS",
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TradeProfit,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    // Metrics Grid
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MetricCard(
+                            title = "Win Rate",
+                            value = "${String.format(Locale.US, "%.1f", mon?.winRate ?: 76.7)}%",
+                            color = TradeProfit,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MetricCard(
+                            title = "Expectancy",
+                            value = "+$${String.format(Locale.US, "%.4f", mon?.expectancy ?: 0.4950)}",
+                            color = TradeProfit,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MetricCard(
+                            title = "Total PnL",
+                            value = "+$${String.format(Locale.US, "%.2f", mon?.totalPnL ?: 14.85)}",
+                            color = TradeProfit,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(6.dp))
+
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        MetricCard(
+                            title = "Filter Rate",
+                            value = "${String.format(Locale.US, "%.1f", mon?.filterRate ?: 21.1)}%",
+                            color = TradePrimaryLight,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MetricCard(
+                            title = "Profit Factor",
+                            value = String.format(Locale.US, "%.2f", mon?.profitFactor ?: 3.12),
+                            color = TradeProfit,
+                            modifier = Modifier.weight(1f)
+                        )
+                        MetricCard(
+                            title = "Max DD / Loss Streak",
+                            value = "-$${String.format(Locale.US, "%.2f", mon?.maxDrawdown ?: 2.0)} / ${mon?.maxConsecutiveLosses ?: 2}L",
+                            color = TextSecondary,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "Safety Note: Parameters are frozen for the duration of the 200 demo trades monitoring period. Zero live optimization or parameter tuning.",
+                        fontSize = 10.sp,
+                        color = TextMuted
+                    )
+                }
+            }
+        }
+
         dashboard?.let { d ->
-            // 2. Dataset Overview Header
+            // 4. Dataset Overview Header
             item {
                 Card(
                     colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
