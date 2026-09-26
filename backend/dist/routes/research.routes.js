@@ -24,6 +24,13 @@ router.get('/strategy-v2-1/ranging-experiment', research_controller_1.getStrateg
 router.get('/strategy-v2-1/threshold-experiment', research_controller_1.getStrategyV2_1ThresholdExperiment);
 router.get('/strategy-v2-1/oos-validation', research_controller_1.getStrategyV2_1OosValidation);
 router.post('/strategy-v2-1/evaluate-signal', research_controller_1.evaluateStrategyV2_1Signal);
+// Strategy V2.2: Extended Fresh Validation Layer
+router.get('/strategy-v2-2/fresh-dashboard', research_controller_1.getStrategyV2_2FreshDashboard);
+router.get('/strategy-v2-2/experiment-matrix', research_controller_1.getStrategyV2_2ExperimentMatrix);
+router.get('/strategy-v2-2/breakdowns', research_controller_1.getStrategyV2_2Breakdowns);
+router.get('/strategy-v2-2/confidence-intervals', research_controller_1.getStrategyV2_2ConfidenceIntervals);
+router.get('/strategy-v2-2/oos-validation', research_controller_1.getStrategyV2_2OosValidation);
+router.post('/strategy-v2-2/collect-fresh-dataset', research_controller_1.collectFreshDatasetV2_2);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

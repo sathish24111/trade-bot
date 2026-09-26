@@ -373,7 +373,12 @@ interface ApiService {
     // Strategy V2.1 Controlled Research Lab & Hypothesis Experiments
     @GET("api/research/strategy-v2-1/lab-dashboard")
     suspend fun getV2_1ResearchLabDashboard(): Response<V2_1_ResearchLabDashboardResponse>
+
+    // Strategy V2.2 Extended Fresh Validation Layer
+    @GET("api/research/strategy-v2-2/fresh-dashboard")
+    suspend fun getV2_2FreshValidationDashboard(): Response<V2_2_FreshValidationDashboardResponse>
 }
+
 
 
 

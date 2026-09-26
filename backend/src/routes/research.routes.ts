@@ -89,7 +89,13 @@ import {
   getStrategyV2_1RangingExperiment,
   getStrategyV2_1ThresholdExperiment,
   getStrategyV2_1OosValidation,
-  evaluateStrategyV2_1Signal
+  evaluateStrategyV2_1Signal,
+  getStrategyV2_2FreshDashboard,
+  getStrategyV2_2ExperimentMatrix,
+  getStrategyV2_2Breakdowns,
+  getStrategyV2_2ConfidenceIntervals,
+  getStrategyV2_2OosValidation,
+  collectFreshDatasetV2_2
 } from '../controllers/research.controller';
 
 
@@ -117,6 +123,15 @@ router.get('/strategy-v2-1/ranging-experiment', getStrategyV2_1RangingExperiment
 router.get('/strategy-v2-1/threshold-experiment', getStrategyV2_1ThresholdExperiment);
 router.get('/strategy-v2-1/oos-validation', getStrategyV2_1OosValidation);
 router.post('/strategy-v2-1/evaluate-signal', evaluateStrategyV2_1Signal);
+
+// Strategy V2.2: Extended Fresh Validation Layer
+router.get('/strategy-v2-2/fresh-dashboard', getStrategyV2_2FreshDashboard);
+router.get('/strategy-v2-2/experiment-matrix', getStrategyV2_2ExperimentMatrix);
+router.get('/strategy-v2-2/breakdowns', getStrategyV2_2Breakdowns);
+router.get('/strategy-v2-2/confidence-intervals', getStrategyV2_2ConfidenceIntervals);
+router.get('/strategy-v2-2/oos-validation', getStrategyV2_2OosValidation);
+router.post('/strategy-v2-2/collect-fresh-dataset', collectFreshDatasetV2_2);
+
 
 
 // Advanced backtest & analytics

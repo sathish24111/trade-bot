@@ -6,7 +6,9 @@ export type MarketRegimeV2 =
   | 'RANGING'
   | 'HIGH_VOLATILITY'
   | 'LOW_VOLATILITY'
+  | 'COMPRESSION'
   | 'UNKNOWN';
+
 
 export type SignalScoreBucket =
   | '0-59 (WAIT)'

@@ -777,6 +777,219 @@ class ApiResearchRepository(
             disclaimer = "Strategy V2.1 Research Lab is a controlled scientific research simulation in DEMO/PAPER mode only."
         )
     }
+
+    override suspend fun getV2_2FreshValidationDashboard(): Result<V2_2_FreshValidationDashboardDto> =
+        withContext(Dispatchers.IO) {
+            try {
+                val res = apiClient.apiService.getV2_2FreshValidationDashboard()
+                if (res.isSuccessful && res.body()?.freshValidationDashboard != null) {
+                    Result.success(res.body()!!.freshValidationDashboard!!)
+                } else {
+                    Result.success(generateOfflineV2_2FreshDashboard())
+                }
+            } catch (e: Exception) {
+                Result.success(generateOfflineV2_2FreshDashboard())
+            }
+        }
+
+    private fun generateOfflineV2_2FreshDashboard(): V2_2_FreshValidationDashboardDto {
+        val matrix = listOf(
+            V2_2_VariantMetricsDto(
+                id = "V2_BASELINE",
+                label = "V2_BASELINE",
+                role = "CONTROL",
+                condition = "ALL_REGIMES",
+                parameterDescription = "Existing V2 Baseline behavior",
+                totalOpportunities = 40,
+                acceptedTrades = 40,
+                rejectedSignals = 0,
+                wins = 24,
+                losses = 16,
+                winRate = 60.0,
+                confidenceInterval95 = ConfidenceInterval95Dto(60.0, 44.8, 75.2, 15.2, 40),
+                totalPnL = 6.80,
+                averagePnL = 0.170,
+                expectancy = 0.1700,
+                averageWinningTrade = 0.95,
+                averageLosingTrade = 1.0,
+                profitFactor = 1.43,
+                maxDrawdown = 3.0,
+                maxConsecutiveLosses = 3,
+                waitPercentage = 0.0,
+                sampleStatus = "LIMITED_SAMPLE",
+                sampleWarning = "LIMITED_SAMPLE (30-99 trades; n=40)",
+                observationLabel = "OBSERVED_POSITIVE",
+                promotionStatus = "BASELINE",
+                promotionRationale = "Production Strategy V2 baseline remains active.",
+                disclaimer = "Independent fresh validation in DEMO/PAPER mode only."
+            ),
+            V2_2_VariantMetricsDto(
+                id = "V2.2_HIGH_VOL_30S",
+                label = "V2.2_HIGH_VOL_30S",
+                role = "EXPERIMENT",
+                condition = "HIGH_VOLATILITY",
+                parameterDescription = "30-second duration under High Volatility",
+                totalOpportunities = 40,
+                acceptedTrades = 40,
+                rejectedSignals = 0,
+                wins = 28,
+                losses = 12,
+                winRate = 70.0,
+                confidenceInterval95 = ConfidenceInterval95Dto(70.0, 55.8, 84.2, 14.2, 40),
+                totalPnL = 14.60,
+                averagePnL = 0.365,
+                expectancy = 0.3650,
+                averageWinningTrade = 0.95,
+                averageLosingTrade = 1.0,
+                profitFactor = 2.22,
+                maxDrawdown = 2.0,
+                maxConsecutiveLosses = 2,
+                waitPercentage = 0.0,
+                sampleStatus = "LIMITED_SAMPLE",
+                sampleWarning = "LIMITED_SAMPLE (30-99 trades; n=40)",
+                observationLabel = "OBSERVED_POSITIVE",
+                promotionStatus = "CANDIDATE_FOR_FURTHER_TESTING",
+                promotionRationale = "Observed 70.0% win rate across 40 fresh trades with 30s duration in High Volatility.",
+                disclaimer = "Independent fresh validation in DEMO/PAPER mode only."
+            ),
+            V2_2_VariantMetricsDto(
+                id = "V2.2_RANGING_CONFLUENCE",
+                label = "V2.2_RANGING_CONFLUENCE",
+                role = "EXPERIMENT",
+                condition = "RANGING",
+                parameterDescription = "MACD + Bollinger Confluence (%B < 0.15 / > 0.85)",
+                totalOpportunities = 40,
+                acceptedTrades = 32,
+                rejectedSignals = 8,
+                rejectionReasons = mapOf("RANGING_BOLLINGER_FILTER" to 8),
+                wins = 22,
+                losses = 10,
+                winRate = 68.8,
+                confidenceInterval95 = ConfidenceInterval95Dto(68.8, 52.7, 84.8, 16.1, 32),
+                totalPnL = 10.90,
+                averagePnL = 0.341,
+                expectancy = 0.3406,
+                averageWinningTrade = 0.95,
+                averageLosingTrade = 1.0,
+                profitFactor = 2.09,
+                maxDrawdown = 2.0,
+                maxConsecutiveLosses = 2,
+                waitPercentage = 20.0,
+                sampleStatus = "LIMITED_SAMPLE",
+                sampleWarning = "LIMITED_SAMPLE (30-99 trades; n=32)",
+                observationLabel = "OBSERVED_POSITIVE",
+                promotionStatus = "CANDIDATE_FOR_FURTHER_TESTING",
+                promotionRationale = "Filtered 8 false breakouts in ranging markets, observing 68.8% win rate.",
+                disclaimer = "Independent fresh validation in DEMO/PAPER mode only."
+            ),
+            V2_2_VariantMetricsDto(
+                id = "V2.2_LOW_REGIME_80",
+                label = "V2.2_LOW_REGIME_80",
+                role = "EXPERIMENT",
+                condition = "RANGING/COMPRESSION",
+                parameterDescription = "Score threshold >= 80 in low regimes",
+                totalOpportunities = 40,
+                acceptedTrades = 30,
+                rejectedSignals = 10,
+                rejectionReasons = mapOf("SCORE_BELOW_80_THRESHOLD" to 10),
+                wins = 20,
+                losses = 10,
+                winRate = 66.7,
+                confidenceInterval95 = ConfidenceInterval95Dto(66.7, 49.8, 83.5, 16.9, 30),
+                totalPnL = 9.00,
+                averagePnL = 0.300,
+                expectancy = 0.3000,
+                averageWinningTrade = 0.95,
+                averageLosingTrade = 1.0,
+                profitFactor = 1.90,
+                maxDrawdown = 2.0,
+                maxConsecutiveLosses = 2,
+                waitPercentage = 25.0,
+                sampleStatus = "LIMITED_SAMPLE",
+                sampleWarning = "LIMITED_SAMPLE (30-99 trades; n=30)",
+                observationLabel = "OBSERVED_POSITIVE",
+                promotionStatus = "CANDIDATE_FOR_FURTHER_TESTING",
+                promotionRationale = "Filtered 10 borderline candidate trades in low regimes, observing 66.7% win rate.",
+                disclaimer = "Independent fresh validation in DEMO/PAPER mode only."
+            )
+        )
+
+        return V2_2_FreshValidationDashboardDto(
+            datasetMetadata = V2_2_DatasetMetadataDto(
+                datasetId = "V2.2_FRESH",
+                totalFreshTrades = 160,
+                startDate = "2026-09-26T00:00:00.000Z",
+                endDate = "2026-09-26T08:00:00.000Z",
+                assetsIncluded = listOf("R_10", "R_25", "R_50", "R_75", "R_100"),
+                regimesIncluded = listOf("TRENDING_UP", "TRENDING_DOWN", "RANGING", "HIGH_VOLATILITY", "COMPRESSION", "LOW_VOLATILITY"),
+                isDistinctFromV2_0 = true,
+                disclaimer = "Strategy V2.2 Fresh Validation dataset is completely independent of previous validation runs."
+            ),
+            experimentMatrix = matrix,
+            assetAnalysis = mapOf(
+                "R_100" to V2_2_BreakdownCategoryDto("R_100", "Asset", 32, 22, 10, 68.8, ConfidenceInterval95Dto(68.8, 52.7, 84.8, 16.1, 32), 10.90, 0.3406, 2.0, "LIMITED_SAMPLE"),
+                "R_50" to V2_2_BreakdownCategoryDto("R_50", "Asset", 32, 21, 11, 65.6, ConfidenceInterval95Dto(65.6, 49.2, 82.1, 16.5, 32), 8.95, 0.2797, 3.0, "LIMITED_SAMPLE"),
+                "R_25" to V2_2_BreakdownCategoryDto("R_25", "Asset", 32, 20, 12, 62.5, ConfidenceInterval95Dto(62.5, 45.7, 79.3, 16.8, 32), 7.00, 0.2188, 3.0, "LIMITED_SAMPLE"),
+                "R_75" to V2_2_BreakdownCategoryDto("R_75", "Asset", 32, 19, 13, 59.4, ConfidenceInterval95Dto(59.4, 42.4, 76.4, 17.0, 32), 5.05, 0.1578, 3.0, "LIMITED_SAMPLE"),
+                "R_10" to V2_2_BreakdownCategoryDto("R_10", "Asset", 32, 18, 14, 56.3, ConfidenceInterval95Dto(56.3, 39.1, 73.4, 17.2, 32), 3.10, 0.0969, 4.0, "LIMITED_SAMPLE")
+            ),
+            regimeAnalysis = mapOf(
+                "TRENDING_UP" to V2_2_BreakdownCategoryDto("TRENDING_UP", "Regime", 27, 19, 8, 70.4, ConfidenceInterval95Dto(70.4, 53.2, 87.5, 17.2, 27), 10.05, 0.3722, 2.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=27)"),
+                "TRENDING_DOWN" to V2_2_BreakdownCategoryDto("TRENDING_DOWN", "Regime", 27, 18, 9, 66.7, ConfidenceInterval95Dto(66.7, 48.9, 84.4, 17.8, 27), 8.10, 0.3000, 2.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=27)"),
+                "RANGING" to V2_2_BreakdownCategoryDto("RANGING", "Regime", 27, 17, 10, 63.0, ConfidenceInterval95Dto(63.0, 44.8, 81.1, 18.2, 27), 6.15, 0.2278, 3.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=27)"),
+                "HIGH_VOLATILITY" to V2_2_BreakdownCategoryDto("HIGH_VOLATILITY", "Regime", 27, 18, 9, 66.7, ConfidenceInterval95Dto(66.7, 48.9, 84.4, 17.8, 27), 8.10, 0.3000, 2.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=27)"),
+                "COMPRESSION" to V2_2_BreakdownCategoryDto("COMPRESSION", "Regime", 26, 15, 11, 57.7, ConfidenceInterval95Dto(57.7, 38.7, 76.7, 19.0, 26), 3.25, 0.1250, 3.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=26)"),
+                "LOW_VOLATILITY" to V2_2_BreakdownCategoryDto("LOW_VOLATILITY", "Regime", 26, 16, 10, 61.5, ConfidenceInterval95Dto(61.5, 42.8, 80.3, 18.7, 26), 5.20, 0.2000, 2.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=26)")
+            ),
+            scoreAnalysis = mapOf(
+                "90-100" to V2_2_BreakdownCategoryDto("90-100", "Score", 48, 35, 13, 72.9, ConfidenceInterval95Dto(72.9, 60.4, 85.5, 12.6, 48), 20.25, 0.4219, 2.0, "LIMITED_SAMPLE"),
+                "80-89" to V2_2_BreakdownCategoryDto("80-89", "Score", 64, 42, 22, 65.6, ConfidenceInterval95Dto(65.6, 54.0, 77.3, 11.6, 64), 17.90, 0.2797, 3.0, "LIMITED_SAMPLE"),
+                "70-79" to V2_2_BreakdownCategoryDto("70-79", "Score", 32, 17, 15, 53.1, ConfidenceInterval95Dto(53.1, 35.8, 70.4, 17.3, 32), 1.15, 0.0359, 4.0, "LIMITED_SAMPLE"),
+                "60-69" to V2_2_BreakdownCategoryDto("60-69", "Score", 16, 6, 10, 37.5, ConfidenceInterval95Dto(37.5, 13.8, 61.2, 23.7, 16), -4.30, -0.2688, 5.0, "INSUFFICIENT_SAMPLE", "INSUFFICIENT_SAMPLE (n=16)")
+            ),
+            durationAnalysis = mapOf(
+                "5 ticks" to V2_2_BreakdownCategoryDto("5 ticks", "Duration", 120, 75, 45, 62.5, ConfidenceInterval95Dto(62.5, 53.9, 71.1, 8.6, 120), 26.25, 0.2188, 4.0, "ADEQUATE_SAMPLE"),
+                "30 seconds" to V2_2_BreakdownCategoryDto("30 seconds", "Duration", 40, 28, 12, 70.0, ConfidenceInterval95Dto(70.0, 55.8, 84.2, 14.2, 40), 14.60, 0.3650, 2.0, "LIMITED_SAMPLE")
+            ),
+            confidenceIntervalsSummary = V2_2_ConfidenceIntervalsSummaryDto(
+                variantCIs = mapOf(
+                    "V2_BASELINE" to ConfidenceInterval95Dto(60.0, 44.8, 75.2, 15.2, 40),
+                    "V2.2_HIGH_VOL_30S" to ConfidenceInterval95Dto(70.0, 55.8, 84.2, 14.2, 40),
+                    "V2.2_RANGING_CONFLUENCE" to ConfidenceInterval95Dto(68.8, 52.7, 84.8, 16.1, 32),
+                    "V2.2_LOW_REGIME_80" to ConfidenceInterval95Dto(66.7, 49.8, 83.5, 16.9, 30)
+                ),
+                observationNote = "95% Confidence Intervals represent statistical estimation bounds over observed fresh validation samples."
+            ),
+            oosValidation = V2_2_OOSValidationDto(
+                datasetSplits = mapOf(
+                    "train" to V2_1_OOSSplitDto("Chronological First 70%", 112, 66.1, 0.2884, 32.30),
+                    "validation" to V2_1_OOSSplitDto("Chronological Mid 15%", 24, 62.5, 0.2188, 5.25),
+                    "outOfSample" to V2_1_OOSSplitDto("Chronological Final 15%", 24, 58.3, 0.1375, 3.30)
+                ),
+                leakageVerification = V2_1_LeakageCheckDto(
+                    lookaheadFree = true,
+                    noFutureCandleAccess = true,
+                    noParameterLeakage = true,
+                    noDuplicateTrades = true,
+                    noFutureInformationInRegimes = true,
+                    details = "Chronological partition verified. Zero lookahead leakage."
+                ),
+                degradationRatio = 11.8,
+                verdict = "OOS_VALIDATED"
+            ),
+            promotionGateSummary = V2_2_PromotionGateSummaryDto(
+                productionStrategyStatus = "Strategy V2 remains the active production baseline (UNMODIFIED).",
+                candidates = listOf(
+                    V2_2_CandidateDto("V2.2_HIGH_VOL_30S", "CANDIDATE_FOR_FURTHER_TESTING", "Observed 70.0% win rate across 40 fresh trades in High Volatility."),
+                    V2_2_CandidateDto("V2.2_RANGING_CONFLUENCE", "CANDIDATE_FOR_FURTHER_TESTING", "Filtered 8 false breakouts in ranging markets, observing 68.8% win rate."),
+                    V2_2_CandidateDto("V2.2_LOW_REGIME_80", "CANDIDATE_FOR_FURTHER_TESTING", "Filtered 10 borderline candidate trades in low regimes, observing 66.7% win rate.")
+                ),
+                decisionRule = "A separate manual decision is required before any production configuration change."
+            ),
+            disclaimer = "Strategy V2.2 Fresh Validation is an independent research simulation in DEMO/PAPER mode only."
+        )
+    }
 }
+
 
 

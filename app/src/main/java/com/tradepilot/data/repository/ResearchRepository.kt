@@ -11,5 +11,7 @@ interface ResearchRepository {
     suspend fun calculatePositionSize(req: PositionSizingRequest): Result<PositionSizingCalculationDto>
     suspend fun getV2ValidationDashboard(symbol: String = "R_100"): Result<V2ValidationDashboardDto>
     suspend fun getV2_1ResearchLabDashboard(): Result<V2_1_ResearchLabDashboardDto>
+    suspend fun getV2_2FreshValidationDashboard(): Result<V2_2_FreshValidationDashboardDto>
 }
+
 

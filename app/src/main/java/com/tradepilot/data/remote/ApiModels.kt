@@ -2045,6 +2045,124 @@ data class V2_1_ResearchLabDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// Strategy V2.2 Fresh Validation DTOs
+// ==========================================
+
+data class ConfidenceInterval95Dto(
+    val pointEstimate: Double = 0.0,
+    val lowerBound: Double = 0.0,
+    val upperBound: Double = 0.0,
+    val marginOfError: Double = 0.0,
+    val sampleSize: Int = 0
+)
+
+data class V2_2_VariantMetricsDto(
+    val id: String = "",
+    val label: String = "",
+    val role: String = "EXPERIMENT",
+    val condition: String = "",
+    val parameterDescription: String = "",
+    val totalOpportunities: Int = 0,
+    val acceptedTrades: Int = 0,
+    val rejectedSignals: Int = 0,
+    val rejectionReasons: Map<String, Int> = emptyMap(),
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val averagePnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val averageWinningTrade: Double = 0.0,
+    val averageLosingTrade: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val waitPercentage: Double = 0.0,
+    val rejectedPercentage: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val sampleWarning: String? = null,
+    val observationLabel: String = "OBSERVED_POSITIVE",
+    val promotionStatus: String = "CANDIDATE_FOR_FURTHER_TESTING",
+    val promotionRationale: String = "",
+    val disclaimer: String = ""
+)
+
+data class V2_2_BreakdownCategoryDto(
+    val key: String = "",
+    val category: String = "",
+    val tradesCount: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val sampleWarning: String? = null
+)
+
+data class V2_2_DatasetMetadataDto(
+    val datasetId: String = "V2.2_FRESH",
+    val totalFreshTrades: Int = 0,
+    val startDate: String = "",
+    val endDate: String = "",
+    val assetsIncluded: List<String> = emptyList(),
+    val regimesIncluded: List<String> = emptyList(),
+    val isDistinctFromV2_0: Boolean = true,
+    val disclaimer: String = ""
+)
+
+data class V2_2_ConfidenceIntervalsSummaryDto(
+    val variantCIs: Map<String, ConfidenceInterval95Dto> = emptyMap(),
+    val observationNote: String = ""
+)
+
+data class V2_2_OOSValidationDto(
+    val datasetSplits: Map<String, V2_1_OOSSplitDto> = emptyMap(),
+    val leakageVerification: V2_1_LeakageCheckDto = V2_1_LeakageCheckDto(),
+    val degradationRatio: Double = 0.0,
+    val verdict: String = "OOS_VALIDATED"
+)
+
+data class V2_2_CandidateDto(
+    val variant: String = "",
+    val status: String = "",
+    val rationale: String = ""
+)
+
+data class V2_2_PromotionGateSummaryDto(
+    val productionStrategyStatus: String = "",
+    val candidates: List<V2_2_CandidateDto> = emptyList(),
+    val decisionRule: String = ""
+)
+
+data class V2_2_FreshValidationDashboardDto(
+    val datasetMetadata: V2_2_DatasetMetadataDto = V2_2_DatasetMetadataDto(),
+    val experimentMatrix: List<V2_2_VariantMetricsDto> = emptyList(),
+    val assetAnalysis: Map<String, V2_2_BreakdownCategoryDto> = emptyMap(),
+    val regimeAnalysis: Map<String, V2_2_BreakdownCategoryDto> = emptyMap(),
+    val scoreAnalysis: Map<String, V2_2_BreakdownCategoryDto> = emptyMap(),
+    val durationAnalysis: Map<String, V2_2_BreakdownCategoryDto> = emptyMap(),
+    val confidenceIntervalsSummary: V2_2_ConfidenceIntervalsSummaryDto = V2_2_ConfidenceIntervalsSummaryDto(),
+    val oosValidation: V2_2_OOSValidationDto = V2_2_OOSValidationDto(),
+    val safetyStatus: Map<String, Any> = emptyMap(),
+    val promotionGateSummary: V2_2_PromotionGateSummaryDto = V2_2_PromotionGateSummaryDto(),
+    val disclaimer: String = ""
+)
+
+data class V2_2_FreshValidationDashboardResponse(
+    val success: Boolean,
+    val freshValidationDashboard: V2_2_FreshValidationDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+
 
 
 

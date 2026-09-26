@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class ResearchTab(val title: String) {
+    V2_2_FRESH_VALIDATION("V2.2 Fresh Validation"),
     V2_1_RESEARCH_LAB("V2.1 Research Lab"),
     V2_VALIDATION("V2 Validation"),
     BACKTEST("Backtest"),
@@ -23,7 +24,7 @@ enum class ResearchTab(val title: String) {
 }
 
 data class ResearchUiState(
-    val selectedTab: ResearchTab = ResearchTab.V2_1_RESEARCH_LAB,
+    val selectedTab: ResearchTab = ResearchTab.V2_2_FRESH_VALIDATION,
     val selectedAsset: String = "EUR/USD",
     val selectedTimeframe: String = "5m",
     val selectedStrategy: String = "EMA_RSI",
@@ -31,6 +32,7 @@ data class ResearchUiState(
     val tradeAmount: Double = 100.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val v2_2FreshDashboard: V2_2_FreshValidationDashboardDto? = null,
     val v2_1LabDashboard: V2_1_ResearchLabDashboardDto? = null,
     val v2ValidationDashboard: V2ValidationDashboardDto? = null,
     val backtestResult: BacktestResultDto? = null,
@@ -56,7 +58,8 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load V2.1 Research Lab and V2 Validation dashboards
+        // Automatically load V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        loadV2_2FreshValidationDashboard()
         loadV2_1ResearchLabDashboard()
         loadV2ValidationDashboard()
         loadRegimes()
@@ -64,6 +67,9 @@ class ResearchViewModel(
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (tab == ResearchTab.V2_2_FRESH_VALIDATION && _uiState.value.v2_2FreshDashboard == null) {
+            loadV2_2FreshValidationDashboard()
+        }
         if (tab == ResearchTab.V2_1_RESEARCH_LAB && _uiState.value.v2_1LabDashboard == null) {
             loadV2_1ResearchLabDashboard()
         }
@@ -74,6 +80,7 @@ class ResearchViewModel(
             loadRegimes()
         }
     }
+
 
 
     fun setAsset(asset: String) {
@@ -258,6 +265,20 @@ class ResearchViewModel(
             }
         }
     }
+
+    fun loadV2_2FreshValidationDashboard() {
+        val s = _uiState.value
+        _uiState.value = s.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val result = repository.getV2_2FreshValidationDashboard()
+            result.onSuccess { data ->
+                _uiState.value = _uiState.value.copy(isLoading = false, v2_2FreshDashboard = data)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.2 fresh validation dashboard")
+            }
+        }
+    }
 }
+
 
 

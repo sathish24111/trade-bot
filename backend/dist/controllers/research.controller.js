@@ -122,6 +122,12 @@ exports.getStrategyV2_1RangingExperiment = getStrategyV2_1RangingExperiment;
 exports.getStrategyV2_1ThresholdExperiment = getStrategyV2_1ThresholdExperiment;
 exports.getStrategyV2_1OosValidation = getStrategyV2_1OosValidation;
 exports.evaluateStrategyV2_1Signal = evaluateStrategyV2_1Signal;
+exports.getStrategyV2_2FreshDashboard = getStrategyV2_2FreshDashboard;
+exports.getStrategyV2_2ExperimentMatrix = getStrategyV2_2ExperimentMatrix;
+exports.getStrategyV2_2Breakdowns = getStrategyV2_2Breakdowns;
+exports.getStrategyV2_2ConfidenceIntervals = getStrategyV2_2ConfidenceIntervals;
+exports.getStrategyV2_2OosValidation = getStrategyV2_2OosValidation;
+exports.collectFreshDatasetV2_2 = collectFreshDatasetV2_2;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -1807,6 +1813,101 @@ async function evaluateStrategyV2_1Signal(req, res) {
             success: true,
             ...SAFETY_METADATA,
             result
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+/**
+ * =====================================================================
+ * STRATEGY V2.2 EXTENDED FRESH VALIDATION ENDPOINTS
+ * =====================================================================
+ */
+async function getStrategyV2_2FreshDashboard(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const dashboard = await v2_2_freshValidationService.getFreshValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            freshValidationDashboard: dashboard
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_2ExperimentMatrix(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const dashboard = await v2_2_freshValidationService.getFreshValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            experimentMatrix: dashboard.experimentMatrix
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_2Breakdowns(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const dashboard = await v2_2_freshValidationService.getFreshValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            assetAnalysis: dashboard.assetAnalysis,
+            regimeAnalysis: dashboard.regimeAnalysis,
+            scoreAnalysis: dashboard.scoreAnalysis,
+            durationAnalysis: dashboard.durationAnalysis
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_2ConfidenceIntervals(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const dashboard = await v2_2_freshValidationService.getFreshValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            confidenceIntervalsSummary: dashboard.confidenceIntervalsSummary
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_2OosValidation(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const dashboard = await v2_2_freshValidationService.getFreshValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            oosValidation: dashboard.oosValidation
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function collectFreshDatasetV2_2(req, res) {
+    try {
+        const { v2_2_freshValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_2_fresh_validation.service')));
+        const count = req.body.count ? Number(req.body.count) : 160;
+        const freshTrades = await v2_2_freshValidationService.getOrSeedFreshDataset(count);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            message: `Successfully collected ${freshTrades.length} fresh demo trades under dataset V2.2_FRESH.`,
+            collectedCount: freshTrades.length,
+            datasetId: 'V2.2_FRESH'
         });
     }
     catch (err) {
