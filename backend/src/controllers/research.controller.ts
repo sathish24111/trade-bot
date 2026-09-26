@@ -2189,6 +2189,105 @@ export async function collectCombinationDatasetV2_4(req: AuthRequest, res: Respo
   }
 }
 
+/**
+ * =====================================================================
+ * STRATEGY V2.5 FINAL FRESH VALIDATION RESEARCH ENDPOINTS
+ * =====================================================================
+ */
+
+export async function getStrategyV2_5FinalValidationDashboard(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      finalValidationDashboard: dashboard
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_5HeadToHead(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      headToHead: dashboard.headToHead
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_5Sessions(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      sessionsList: dashboard.sessionsList,
+      totalSessions: dashboard.sessionsList.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_5OosValidation(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      oosValidation: dashboard.oosValidation,
+      robustnessChecklist: dashboard.robustnessChecklist
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_5ValidationGate(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      finalValidationGate: dashboard.finalValidationGate
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function collectFinalValidationDatasetV2_5(req: AuthRequest, res: Response) {
+  try {
+    const { v2_5_finalValidationService } = await import('../services/research/v2_5_final_validation.service');
+    const sessions = req.body.sessions ? Number(req.body.sessions) : 15;
+    const opportunitiesPerSession = req.body.opportunitiesPerSession ? Number(req.body.opportunitiesPerSession) : 100;
+    const trades = await v2_5_finalValidationService.getOrSeedFinalValidationDataset(sessions, opportunitiesPerSession);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      message: `Successfully generated ${trades.length / 2} fresh opportunities (${trades.length} paired trade entries) across ${sessions} sessions under dataset V2.5_FINAL_FRESH_VALIDATION.`,
+      totalOpportunities: trades.length / 2,
+      totalTradeEntries: trades.length,
+      sessionsCount: sessions,
+      datasetId: 'V2.5_FINAL_FRESH_VALIDATION'
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+
 
 
 

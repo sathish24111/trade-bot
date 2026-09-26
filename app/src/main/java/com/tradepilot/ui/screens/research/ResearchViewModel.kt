@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class ResearchTab(val title: String) {
+    V2_5_FINAL_VALIDATION("V2.5 Final Validation"),
     V2_4_COMBINATION_LAB("V2.4 Combination Lab"),
     V2_3_MULTI_SESSION_LAB("V2.3 Multi-Session Lab"),
     V2_2_FRESH_VALIDATION("V2.2 Fresh Validation"),
@@ -26,7 +27,7 @@ enum class ResearchTab(val title: String) {
 }
 
 data class ResearchUiState(
-    val selectedTab: ResearchTab = ResearchTab.V2_4_COMBINATION_LAB,
+    val selectedTab: ResearchTab = ResearchTab.V2_5_FINAL_VALIDATION,
     val selectedAsset: String = "EUR/USD",
     val selectedTimeframe: String = "5m",
     val selectedStrategy: String = "EMA_RSI",
@@ -34,6 +35,7 @@ data class ResearchUiState(
     val tradeAmount: Double = 100.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val v2_5FinalValidationDashboard: V2_5_FinalValidationDashboardDto? = null,
     val v2_4CombinationDashboard: V2_4_CombinationDashboardDto? = null,
     val v2_3MultiSessionDashboard: V2_3_MultiSessionDashboardDto? = null,
     val v2_2FreshDashboard: V2_2_FreshValidationDashboardDto? = null,
@@ -62,7 +64,8 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load V2.4 Combination Lab, V2.3 Multi-Session Lab, V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        // Automatically load V2.5 Final Validation, V2.4 Combination Lab, V2.3 Multi-Session Lab, V2.2 Fresh Validation, V2.1 Research Lab and V2 Validation dashboards
+        loadV2_5FinalValidationDashboard()
         loadV2_4CombinationDashboard()
         loadV2_3MultiSessionDashboard()
         loadV2_2FreshValidationDashboard()
@@ -73,6 +76,9 @@ class ResearchViewModel(
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (tab == ResearchTab.V2_5_FINAL_VALIDATION && _uiState.value.v2_5FinalValidationDashboard == null) {
+            loadV2_5FinalValidationDashboard()
+        }
         if (tab == ResearchTab.V2_4_COMBINATION_LAB && _uiState.value.v2_4CombinationDashboard == null) {
             loadV2_4CombinationDashboard()
         }
@@ -313,6 +319,19 @@ class ResearchViewModel(
                 _uiState.value = _uiState.value.copy(isLoading = false, v2_4CombinationDashboard = data)
             }.onFailure { err ->
                 _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.4 combination dashboard")
+            }
+        }
+    }
+
+    fun loadV2_5FinalValidationDashboard() {
+        val s = _uiState.value
+        _uiState.value = s.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val result = repository.getV2_5FinalValidationDashboard()
+            result.onSuccess { data ->
+                _uiState.value = _uiState.value.copy(isLoading = false, v2_5FinalValidationDashboard = data)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.5 final validation dashboard")
             }
         }
     }

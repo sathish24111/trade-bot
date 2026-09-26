@@ -2574,6 +2574,214 @@ data class V2_4_CombinationDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// STRATEGY V2.5: FINAL FRESH VALIDATION DTOs
+// ==========================================
+
+data class V2_5_StrategyMetricsDto(
+    val strategyId: String = "",
+    val label: String = "",
+    val totalObservations: Int = 0,
+    val acceptedTrades: Int = 0,
+    val filteredOpportunities: Int = 0,
+    val tradeAcceptanceRate: Double = 0.0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val averagePnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val averageTradeDuration: String = "",
+    val medianTradeDuration: String = "",
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val disclaimer: String = ""
+)
+
+data class V2_5_HeadToHeadComparisonDto(
+    val baselineMetrics: V2_5_StrategyMetricsDto = V2_5_StrategyMetricsDto(),
+    val candidateMetrics: V2_5_StrategyMetricsDto = V2_5_StrategyMetricsDto(),
+    val deltaWinRate: Double = 0.0,
+    val deltaExpectancy: Double = 0.0,
+    val deltaProfitFactor: Double = 0.0,
+    val deltaPnL: Double = 0.0,
+    val deltaMaxDrawdown: Double = 0.0,
+    val deltaConsecutiveLosses: Int = 0,
+    val deltaTradeAcceptance: Double = 0.0,
+    val interpretation: String = "",
+    val isSuperior: Boolean = true
+)
+
+data class V2_5_SessionMetricsDto(
+    val sessionId: String = "",
+    val sessionIndex: Int = 0,
+    val sessionDate: String = "",
+    val totalOpportunities: Int = 0,
+    val baselineAccepted: Int = 0,
+    val candidateAccepted: Int = 0,
+    val filteredTrades: Int = 0,
+    val baselineWins: Int = 0,
+    val baselineLosses: Int = 0,
+    val candidateWins: Int = 0,
+    val candidateLosses: Int = 0,
+    val baselineWinRate: Double = 0.0,
+    val candidateWinRate: Double = 0.0,
+    val baselinePnL: Double = 0.0,
+    val candidatePnL: Double = 0.0,
+    val baselineExpectancy: Double = 0.0,
+    val candidateExpectancy: Double = 0.0,
+    val candidateProfitFactor: Double = 0.0,
+    val candidateMaxDrawdown: Double = 0.0,
+    val candidateMaxConsecutiveLosses: Int = 0,
+    val sessionOutcome: String = "POSITIVE",
+    val degradationDetected: Boolean = false,
+    val degradationReason: String? = null
+)
+
+data class V2_5_CrossAssetMetricsDto(
+    val asset: String = "",
+    val totalObservations: Int = 0,
+    val baselineAccepted: Int = 0,
+    val candidateAccepted: Int = 0,
+    val baselineWins: Int = 0,
+    val baselineLosses: Int = 0,
+    val candidateWins: Int = 0,
+    val candidateLosses: Int = 0,
+    val baselineWinRate: Double = 0.0,
+    val candidateWinRate: Double = 0.0,
+    val candidateConfidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val baselinePnL: Double = 0.0,
+    val candidatePnL: Double = 0.0,
+    val baselineExpectancy: Double = 0.0,
+    val candidateExpectancy: Double = 0.0,
+    val candidateProfitFactor: Double = 0.0,
+    val candidateMaxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE"
+)
+
+data class V2_5_CrossRegimeMetricsDto(
+    val regime: String = "",
+    val totalObservations: Int = 0,
+    val baselineAccepted: Int = 0,
+    val candidateAccepted: Int = 0,
+    val baselineWins: Int = 0,
+    val baselineLosses: Int = 0,
+    val candidateWins: Int = 0,
+    val candidateLosses: Int = 0,
+    val baselineWinRate: Double = 0.0,
+    val candidateWinRate: Double = 0.0,
+    val candidateConfidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val baselinePnL: Double = 0.0,
+    val candidatePnL: Double = 0.0,
+    val baselineExpectancy: Double = 0.0,
+    val candidateExpectancy: Double = 0.0,
+    val candidateProfitFactor: Double = 0.0,
+    val candidateMaxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val regimeAssessment: String = "OPTIMAL"
+)
+
+data class V2_5_OOSSplitMetricsDto(
+    val period: String = "",
+    val count: Int = 0,
+    val winRate: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val pnl: Double = 0.0
+)
+
+data class V2_5_OOSValidationDto(
+    val datasetSplits: Map<String, V2_5_OOSSplitMetricsDto> = emptyMap(),
+    val degradationRatio: Double = 0.0,
+    val degradationThreshold: Double = 25.0,
+    val verdict: String = "OOS_VALIDATED"
+)
+
+data class V2_5_RobustnessChecklistDto(
+    val lookaheadPrevention: Boolean = true,
+    val parameterLeakagePrevention: Boolean = true,
+    val regimeLeakagePrevention: Boolean = true,
+    val duplicateSignalPrevention: Boolean = true,
+    val chronologicalOrdering: Boolean = true,
+    val sessionAssignmentIntegrity: Boolean = true,
+    val dataQualityProtection: Boolean = true,
+    val noFutureTimestamp: Boolean = true,
+    val noFutureCandle: Boolean = true,
+    val noOutcomeFiltering: Boolean = true,
+    val noPostHocTuning: Boolean = true,
+    val allPassed: Boolean = true,
+    val details: String = ""
+)
+
+data class V2_5_RiskSafetyValidationDto(
+    val dailyLossLimitActive: Boolean = true,
+    val drawdownBreakerActive: Boolean = true,
+    val consecutiveLossBreakerActive: Boolean = true,
+    val activePositionLockActive: Boolean = true,
+    val cooldownIntervalActive: Boolean = true,
+    val duplicateSignalSuppressionActive: Boolean = true,
+    val dataQualityGateActive: Boolean = true,
+    val demoPaperEnforcement: Boolean = true,
+    val safetyBreached: Boolean = false,
+    val triggeredMechanisms: List<String> = emptyList()
+)
+
+data class V2_5_FinalValidationCriteriaChecksDto(
+    val scaleExceeds1000Observations: Boolean = true,
+    val multiSessionConsistent: Boolean = true,
+    val oosHoldoutValidated: Boolean = true,
+    val expectancySuperior: Boolean = true,
+    val drawdownAcceptable: Boolean = true,
+    val consecutiveLossStreakAcceptable: Boolean = true,
+    val robustnessAllPassed: Boolean = true,
+    val safetyControlsMaintained: Boolean = true
+)
+
+data class V2_5_FinalValidationGateDto(
+    val gateStatus: String = "VALIDATION_PASSED",
+    val productionStrategyStatus: String = "",
+    val candidateStatus: String = "",
+    val criteriaChecks: V2_5_FinalValidationCriteriaChecksDto = V2_5_FinalValidationCriteriaChecksDto(),
+    val decisionRationale: String = "",
+    val governanceNotice: String = ""
+)
+
+data class V2_5_DatasetMetadataDto(
+    val datasetId: String = "V2.5_FINAL_FRESH_VALIDATION",
+    val totalObservations: Int = 1500,
+    val totalSessions: Int = 15,
+    val startDate: String = "",
+    val endDate: String = "",
+    val assetsIncluded: List<String> = emptyList(),
+    val regimesIncluded: List<String> = emptyList(),
+    val disclaimer: String = ""
+)
+
+data class V2_5_FinalValidationDashboardDto(
+    val datasetMetadata: V2_5_DatasetMetadataDto = V2_5_DatasetMetadataDto(),
+    val headToHead: V2_5_HeadToHeadComparisonDto = V2_5_HeadToHeadComparisonDto(),
+    val sessionsList: List<V2_5_SessionMetricsDto> = emptyList(),
+    val crossAssetAnalysis: Map<String, V2_5_CrossAssetMetricsDto> = emptyMap(),
+    val crossRegimeAnalysis: Map<String, V2_5_CrossRegimeMetricsDto> = emptyMap(),
+    val oosValidation: V2_5_OOSValidationDto = V2_5_OOSValidationDto(),
+    val robustnessChecklist: V2_5_RobustnessChecklistDto = V2_5_RobustnessChecklistDto(),
+    val riskSafetyValidation: V2_5_RiskSafetyValidationDto = V2_5_RiskSafetyValidationDto(),
+    val finalValidationGate: V2_5_FinalValidationGateDto = V2_5_FinalValidationGateDto(),
+    val disclaimer: String = ""
+)
+
+data class V2_5_FinalValidationDashboardResponse(
+    val success: Boolean,
+    val finalValidationDashboard: V2_5_FinalValidationDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+
 
 
 

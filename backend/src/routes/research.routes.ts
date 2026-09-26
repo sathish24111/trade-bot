@@ -109,8 +109,15 @@ import {
   getStrategyV2_4Ablation,
   getStrategyV2_4OosValidation,
   getStrategyV2_4PromotionGate,
-  collectCombinationDatasetV2_4
+  collectCombinationDatasetV2_4,
+  getStrategyV2_5FinalValidationDashboard,
+  getStrategyV2_5HeadToHead,
+  getStrategyV2_5Sessions,
+  getStrategyV2_5OosValidation,
+  getStrategyV2_5ValidationGate,
+  collectFinalValidationDatasetV2_5
 } from '../controllers/research.controller';
+
 
 
 const router = Router();
@@ -163,6 +170,15 @@ router.get('/strategy-v2-4/ablation', getStrategyV2_4Ablation);
 router.get('/strategy-v2-4/oos-validation', getStrategyV2_4OosValidation);
 router.get('/strategy-v2-4/promotion-gate', getStrategyV2_4PromotionGate);
 router.post('/strategy-v2-4/collect-dataset', collectCombinationDatasetV2_4);
+
+// Strategy V2.5: Final Fresh Validation
+router.get('/strategy-v2-5/dashboard', getStrategyV2_5FinalValidationDashboard);
+router.get('/strategy-v2-5/head-to-head', getStrategyV2_5HeadToHead);
+router.get('/strategy-v2-5/sessions', getStrategyV2_5Sessions);
+router.get('/strategy-v2-5/oos-validation', getStrategyV2_5OosValidation);
+router.get('/strategy-v2-5/validation-gate', getStrategyV2_5ValidationGate);
+router.post('/strategy-v2-5/collect-dataset', collectFinalValidationDatasetV2_5);
+
 
 
 

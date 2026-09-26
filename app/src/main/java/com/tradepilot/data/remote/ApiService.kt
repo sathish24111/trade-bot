@@ -385,6 +385,10 @@ interface ApiService {
     // Strategy V2.4 Combination & Ablation Research Phase
     @GET("api/research/strategy-v2-4/dashboard")
     suspend fun getV2_4CombinationDashboard(): Response<V2_4_CombinationDashboardResponse>
+
+    // Strategy V2.5 Final Fresh Validation Phase
+    @GET("api/research/strategy-v2-5/dashboard")
+    suspend fun getV2_5FinalValidationDashboard(): Response<V2_5_FinalValidationDashboardResponse>
 }
 
 

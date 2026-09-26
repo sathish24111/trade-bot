@@ -47,6 +47,13 @@ router.get('/strategy-v2-4/ablation', research_controller_1.getStrategyV2_4Ablat
 router.get('/strategy-v2-4/oos-validation', research_controller_1.getStrategyV2_4OosValidation);
 router.get('/strategy-v2-4/promotion-gate', research_controller_1.getStrategyV2_4PromotionGate);
 router.post('/strategy-v2-4/collect-dataset', research_controller_1.collectCombinationDatasetV2_4);
+// Strategy V2.5: Final Fresh Validation
+router.get('/strategy-v2-5/dashboard', research_controller_1.getStrategyV2_5FinalValidationDashboard);
+router.get('/strategy-v2-5/head-to-head', research_controller_1.getStrategyV2_5HeadToHead);
+router.get('/strategy-v2-5/sessions', research_controller_1.getStrategyV2_5Sessions);
+router.get('/strategy-v2-5/oos-validation', research_controller_1.getStrategyV2_5OosValidation);
+router.get('/strategy-v2-5/validation-gate', research_controller_1.getStrategyV2_5ValidationGate);
+router.post('/strategy-v2-5/collect-dataset', research_controller_1.collectFinalValidationDatasetV2_5);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

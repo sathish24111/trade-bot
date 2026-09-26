@@ -142,6 +142,12 @@ exports.getStrategyV2_4Ablation = getStrategyV2_4Ablation;
 exports.getStrategyV2_4OosValidation = getStrategyV2_4OosValidation;
 exports.getStrategyV2_4PromotionGate = getStrategyV2_4PromotionGate;
 exports.collectCombinationDatasetV2_4 = collectCombinationDatasetV2_4;
+exports.getStrategyV2_5FinalValidationDashboard = getStrategyV2_5FinalValidationDashboard;
+exports.getStrategyV2_5HeadToHead = getStrategyV2_5HeadToHead;
+exports.getStrategyV2_5Sessions = getStrategyV2_5Sessions;
+exports.getStrategyV2_5OosValidation = getStrategyV2_5OosValidation;
+exports.getStrategyV2_5ValidationGate = getStrategyV2_5ValidationGate;
+exports.collectFinalValidationDatasetV2_5 = collectFinalValidationDatasetV2_5;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -2141,6 +2147,103 @@ async function collectCombinationDatasetV2_4(req, res) {
             totalTrades: trades.length,
             sessionsCount: sessions,
             datasetId: 'V2.4_COMBINATION_ABLATION'
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+/**
+ * =====================================================================
+ * STRATEGY V2.5 FINAL FRESH VALIDATION RESEARCH ENDPOINTS
+ * =====================================================================
+ */
+async function getStrategyV2_5FinalValidationDashboard(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            finalValidationDashboard: dashboard
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_5HeadToHead(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            headToHead: dashboard.headToHead
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_5Sessions(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            sessionsList: dashboard.sessionsList,
+            totalSessions: dashboard.sessionsList.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_5OosValidation(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            oosValidation: dashboard.oosValidation,
+            robustnessChecklist: dashboard.robustnessChecklist
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_5ValidationGate(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const dashboard = await v2_5_finalValidationService.getFinalValidationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            finalValidationGate: dashboard.finalValidationGate
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function collectFinalValidationDatasetV2_5(req, res) {
+    try {
+        const { v2_5_finalValidationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_5_final_validation.service')));
+        const sessions = req.body.sessions ? Number(req.body.sessions) : 15;
+        const opportunitiesPerSession = req.body.opportunitiesPerSession ? Number(req.body.opportunitiesPerSession) : 100;
+        const trades = await v2_5_finalValidationService.getOrSeedFinalValidationDataset(sessions, opportunitiesPerSession);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            message: `Successfully generated ${trades.length / 2} fresh opportunities (${trades.length} paired trade entries) across ${sessions} sessions under dataset V2.5_FINAL_FRESH_VALIDATION.`,
+            totalOpportunities: trades.length / 2,
+            totalTradeEntries: trades.length,
+            sessionsCount: sessions,
+            datasetId: 'V2.5_FINAL_FRESH_VALIDATION'
         });
     }
     catch (err) {
