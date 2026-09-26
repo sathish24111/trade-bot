@@ -1937,6 +1937,115 @@ data class V2ValidationDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// Strategy V2.1 Research Lab DTOs
+// ==========================================
+
+data class ResearchExperimentVariantDto(
+    val id: String = "",
+    val experimentGroup: String = "",
+    val label: String = "",
+    val condition: String = "",
+    val parameterDescription: String = "",
+    val status: String = "EXPERIMENT",
+    val validationStatus: String = "INSUFFICIENT_SAMPLE",
+    val totalTrades: Int = 0,
+    val acceptedSignals: Int = 0,
+    val rejectedSignals: Int = 0,
+    val rejectionReasons: Map<String, Int> = emptyMap(),
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val averageWin: Double = 0.0,
+    val averageLoss: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val totalPnL: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val waitPercentage: Double = 0.0,
+    val averageDuration: String = "",
+    val lossReductionVsBaseline: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE",
+    val sampleWarning: String? = null,
+    val assetBreakdown: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val regimeBreakdown: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val scoreBucketBreakdown: Map<String, ResearchCategoryMetricsDto> = emptyMap(),
+    val disclaimer: String = ""
+)
+
+data class V2_1_OOSSplitDto(
+    val period: String = "",
+    val count: Int = 0,
+    val winRate: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val pnl: Double = 0.0
+)
+
+data class V2_1_LeakageCheckDto(
+    val lookaheadFree: Boolean = true,
+    val noFutureCandleAccess: Boolean = true,
+    val noParameterLeakage: Boolean = true,
+    val noDuplicateTrades: Boolean = true,
+    val noFutureInformationInRegimes: Boolean = true,
+    val details: String = ""
+)
+
+data class V2_1_OOSValidationResultDto(
+    val splits: Map<String, V2_1_OOSSplitDto> = emptyMap(),
+    val leakageCheck: V2_1_LeakageCheckDto = V2_1_LeakageCheckDto(),
+    val degradationRatio: Double = 0.0,
+    val verdict: String = "VALIDATED",
+    val disclaimer: String = ""
+)
+
+data class V2_1_LossReductionSummaryDto(
+    val hypothesis1Reduction: String = "",
+    val hypothesis2Reduction: String = "",
+    val hypothesis3Reduction: String = "",
+    val overallObservations: List<String> = emptyList()
+)
+
+data class V2_1_SafetyStatusDto(
+    val demoPaperOnly: Boolean = true,
+    val dataQualityVerified: Boolean = true,
+    val volatilityStateOk: Boolean = true,
+    val dailyLossLimitOk: Boolean = true,
+    val drawdownLimitOk: Boolean = true,
+    val consecutiveLossBreakerOk: Boolean = true,
+    val activePositionLockOk: Boolean = true,
+    val cooldownOk: Boolean = true,
+    val duplicateSignalSuppressionOk: Boolean = true,
+    val signalValidityOk: Boolean = true,
+    val disclaimer: String = ""
+)
+
+data class V2_1_ExperimentGroupDto(
+    val variants: List<ResearchExperimentVariantDto> = emptyList(),
+    val rejectedSignalsCount: Int = 0,
+    val summary: String = ""
+)
+
+data class V2_1_ResearchLabDashboardDto(
+    val experimentsMatrix: List<ResearchExperimentVariantDto> = emptyList(),
+    val durationExperiment: V2_1_ExperimentGroupDto = V2_1_ExperimentGroupDto(),
+    val rangingConfluenceExperiment: V2_1_ExperimentGroupDto = V2_1_ExperimentGroupDto(),
+    val thresholdExperiment: V2_1_ExperimentGroupDto = V2_1_ExperimentGroupDto(),
+    val oosValidation: V2_1_OOSValidationResultDto = V2_1_OOSValidationResultDto(),
+    val lossReductionSummary: V2_1_LossReductionSummaryDto = V2_1_LossReductionSummaryDto(),
+    val safetyStatus: V2_1_SafetyStatusDto = V2_1_SafetyStatusDto(),
+    val disclaimer: String = ""
+)
+
+data class V2_1_ResearchLabDashboardResponse(
+    val success: Boolean,
+    val researchLabDashboard: V2_1_ResearchLabDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+
 
 
 

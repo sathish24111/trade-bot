@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 enum class ResearchTab(val title: String) {
+    V2_1_RESEARCH_LAB("V2.1 Research Lab"),
     V2_VALIDATION("V2 Validation"),
     BACKTEST("Backtest"),
     OPTIMIZE("Optimize"),
@@ -22,7 +23,7 @@ enum class ResearchTab(val title: String) {
 }
 
 data class ResearchUiState(
-    val selectedTab: ResearchTab = ResearchTab.V2_VALIDATION,
+    val selectedTab: ResearchTab = ResearchTab.V2_1_RESEARCH_LAB,
     val selectedAsset: String = "EUR/USD",
     val selectedTimeframe: String = "5m",
     val selectedStrategy: String = "EMA_RSI",
@@ -30,6 +31,7 @@ data class ResearchUiState(
     val tradeAmount: Double = 100.0,
     val isLoading: Boolean = false,
     val errorMessage: String? = null,
+    val v2_1LabDashboard: V2_1_ResearchLabDashboardDto? = null,
     val v2ValidationDashboard: V2ValidationDashboardDto? = null,
     val backtestResult: BacktestResultDto? = null,
     val optimizationResult: OptimizationResultDto? = null,
@@ -54,13 +56,17 @@ class ResearchViewModel(
     val uiState: StateFlow<ResearchUiState> = _uiState.asStateFlow()
 
     init {
-        // Automatically load initial validation and regime analysis
+        // Automatically load V2.1 Research Lab and V2 Validation dashboards
+        loadV2_1ResearchLabDashboard()
         loadV2ValidationDashboard()
         loadRegimes()
     }
 
     fun setTab(tab: ResearchTab) {
         _uiState.value = _uiState.value.copy(selectedTab = tab)
+        if (tab == ResearchTab.V2_1_RESEARCH_LAB && _uiState.value.v2_1LabDashboard == null) {
+            loadV2_1ResearchLabDashboard()
+        }
         if (tab == ResearchTab.V2_VALIDATION && _uiState.value.v2ValidationDashboard == null) {
             loadV2ValidationDashboard()
         }
@@ -68,6 +74,7 @@ class ResearchViewModel(
             loadRegimes()
         }
     }
+
 
     fun setAsset(asset: String) {
         _uiState.value = _uiState.value.copy(selectedAsset = asset)
@@ -238,5 +245,19 @@ class ResearchViewModel(
             }
         }
     }
+
+    fun loadV2_1ResearchLabDashboard() {
+        val s = _uiState.value
+        _uiState.value = s.copy(isLoading = true, errorMessage = null)
+        viewModelScope.launch {
+            val result = repository.getV2_1ResearchLabDashboard()
+            result.onSuccess { data ->
+                _uiState.value = _uiState.value.copy(isLoading = false, v2_1LabDashboard = data)
+            }.onFailure { err ->
+                _uiState.value = _uiState.value.copy(isLoading = false, errorMessage = err.message ?: "Failed to load V2.1 research lab dashboard")
+            }
+        }
+    }
 }
+
 

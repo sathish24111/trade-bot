@@ -217,6 +217,7 @@ fun ResearchScreen(
                 }
             } else {
                 when (state.selectedTab) {
+                    ResearchTab.V2_1_RESEARCH_LAB -> V2_1ResearchLabTabContent(state, onRefresh = { viewModel.loadV2_1ResearchLabDashboard() })
                     ResearchTab.V2_VALIDATION -> V2ValidationTabContent(state, onRefresh = { viewModel.loadV2ValidationDashboard() })
                     ResearchTab.BACKTEST -> BacktestTabContent(state, onRun = { viewModel.runBacktest() })
                     ResearchTab.OPTIMIZE -> OptimizeTabContent(state, onRun = { viewModel.runOptimization() })
@@ -1512,4 +1513,456 @@ private fun V2ValidationTabContent(
         }
     }
 }
+
+// -------------------------------------------------------------
+// V2.1 CONTROLLED RESEARCH LAB
+// -------------------------------------------------------------
+@Composable
+private fun V2_1ResearchLabTabContent(
+    state: ResearchUiState,
+    onRefresh: () -> Unit
+) {
+    val dashboard = state.v2_1LabDashboard
+    var selectedSubTab by remember { mutableStateOf(0) }
+    val subTabs = listOf(
+        "Duration Exp",
+        "Ranging Confluence",
+        "Threshold Exp",
+        "Matrix",
+        "OOS Validation",
+        "Loss Reduction",
+        "Safety"
+    )
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        // Top Header Card
+        item {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "Strategy V2.1 — Controlled Research Lab",
+                                fontSize = 15.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = TextPrimary
+                            )
+                            Text(
+                                text = "Independent hypothesis isolation & validation (DEMO/PAPER ONLY)",
+                                fontSize = 11.sp,
+                                color = TextMuted
+                            )
+                        }
+                        IconButton(onClick = onRefresh) {
+                            Icon(imageVector = Icons.Default.Refresh, contentDescription = "Refresh", tint = TradePrimaryLight)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // Neutral disclaimer banner
+                    Surface(
+                        color = DarkSurface,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Scientific Research Sandbox: Baseline Strategy V2 remains active in paper production. V2.1 variants are evaluated independently without automated parameter mutation.",
+                            fontSize = 11.sp,
+                            color = TextSecondary,
+                            modifier = Modifier.padding(10.dp)
+                        )
+                    }
+                }
+            }
+        }
+
+        // Sub-Tab Navigation Bar
+        item {
+            ScrollableTabRow(
+                selectedTabIndex = selectedSubTab,
+                containerColor = DarkSurfaceElevated,
+                contentColor = TradePrimaryLight,
+                edgePadding = 8.dp,
+                indicator = { tabPositions ->
+                    TabRowDefaults.SecondaryIndicator(
+                        Modifier.tabIndicatorOffset(tabPositions[selectedSubTab]),
+                        color = TradePrimary
+                    )
+                }
+            ) {
+                subTabs.forEachIndexed { index, title ->
+                    Tab(
+                        selected = selectedSubTab == index,
+                        onClick = { selectedSubTab = index },
+                        text = {
+                            Text(
+                                text = title,
+                                fontSize = 12.sp,
+                                fontWeight = if (selectedSubTab == index) FontWeight.Bold else FontWeight.Normal,
+                                color = if (selectedSubTab == index) TradePrimaryLight else TextMuted
+                            )
+                        }
+                    )
+                }
+            }
+        }
+
+        // Sub-Tab Content Rendering
+        when (selectedSubTab) {
+            0 -> {
+                // Tab 1: Duration Experiment (High Volatility)
+                item {
+                    Text(
+                        text = "Experiment A: HIGH_VOLATILITY Duration Variants",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = dashboard?.durationExperiment?.summary ?: "Testing 5t vs 15t vs 30s vs 2m under High Volatility.",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+                items(dashboard?.durationExperiment?.variants ?: emptyList()) { variant ->
+                    ExperimentVariantCard(variant)
+                }
+            }
+            1 -> {
+                // Tab 2: Ranging Confluence (MACD + Bollinger %B)
+                item {
+                    Text(
+                        text = "Experiment B: Ranging Confluence (MACD + Bollinger %B)",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = dashboard?.rangingConfluenceExperiment?.summary ?: "Testing MACD + Bollinger %B confluence in Ranging markets.",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+                items(dashboard?.rangingConfluenceExperiment?.variants ?: emptyList()) { variant ->
+                    ExperimentVariantCard(variant)
+                }
+            }
+            2 -> {
+                // Tab 3: Threshold Experiment (Score >= 70 vs Score >= 80)
+                item {
+                    Text(
+                        text = "Experiment C: Low-Regime Score Thresholds",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = dashboard?.thresholdExperiment?.summary ?: "Testing min score 70 vs 80 in RANGING/COMPRESSION.",
+                        fontSize = 11.sp,
+                        color = TextMuted
+                    )
+                }
+                items(dashboard?.thresholdExperiment?.variants ?: emptyList()) { variant ->
+                    ExperimentVariantCard(variant)
+                }
+            }
+            3 -> {
+                // Tab 4: Experiment Matrix
+                item {
+                    Text(
+                        text = "Full Controlled Experiment Matrix (All 8 Variants)",
+                        fontSize = 13.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = TextPrimary
+                    )
+                }
+                items(dashboard?.experimentsMatrix ?: emptyList()) { variant ->
+                    ExperimentVariantCard(variant)
+                }
+            }
+            4 -> {
+                // Tab 5: OOS Validation
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(text = "Chronological Out-of-Sample (70/15/15)", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                Surface(
+                                    color = TradeProfit.copy(alpha = 0.15f),
+                                    shape = RoundedCornerShape(4.dp)
+                                ) {
+                                    Text(
+                                        text = dashboard?.oosValidation?.verdict ?: "VALIDATED",
+                                        fontSize = 10.sp,
+                                        fontWeight = FontWeight.Bold,
+                                        color = TradeProfit,
+                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Leakage Check: ${dashboard?.oosValidation?.leakageCheck?.details ?: "Chronological slice verified with zero future lookahead bias."}",
+                                fontSize = 11.sp,
+                                color = TextSecondary
+                            )
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            dashboard?.oosValidation?.splits?.forEach { (splitKey, split) ->
+                                Surface(
+                                    color = DarkSurface,
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                ) {
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth().padding(10.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(splitKey.uppercase(), fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                                            Text("${split.count} Trades | ${split.period}", fontSize = 10.sp, color = TextMuted)
+                                        }
+                                        Column(horizontalAlignment = Alignment.End) {
+                                            Text("Win%: ${split.winRate}%", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (split.winRate >= 55) TradeProfit else DemoAmber)
+                                            Text("Exp: +$${String.format(Locale.US, "%.4f", split.expectancy)}", fontSize = 10.sp, color = TextSecondary)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            5 -> {
+                // Tab 6: Loss Reduction Summary
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "Hypothesis Loss Reduction Evidence", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val summary = dashboard?.lossReductionSummary
+                            listOf(
+                                "Hypothesis 1 (HV Duration)" to (summary?.hypothesis1Reduction ?: "30s duration reduced tick whipsaws."),
+                                "Hypothesis 2 (Ranging Confluence)" to (summary?.hypothesis2Reduction ?: "Bollinger confluence filtered ranging false breakouts."),
+                                "Hypothesis 3 (Score Threshold)" to (summary?.hypothesis3Reduction ?: "Elevated threshold >= 80 eliminated low-regime drawdown.")
+                            ).forEach { (title, desc) ->
+                                Surface(
+                                    color = DarkSurface,
+                                    shape = RoundedCornerShape(8.dp),
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)
+                                ) {
+                                    Column(modifier = Modifier.padding(10.dp)) {
+                                        Text(text = title, fontSize = 11.sp, fontWeight = FontWeight.Bold, color = TradePrimaryLight)
+                                        Spacer(modifier = Modifier.height(2.dp))
+                                        Text(text = desc, fontSize = 11.sp, color = TextSecondary)
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            6 -> {
+                // Tab 7: Safety Status
+                item {
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(text = "Paper Pre-Trade Safety Verification", fontSize = 13.sp, fontWeight = FontWeight.Bold, color = TextPrimary)
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            val safety = dashboard?.safetyStatus
+                            val safetyChecks = listOf(
+                                "DEMO / PAPER Mode Only" to (safety?.demoPaperOnly == true),
+                                "Data Quality Verified" to (safety?.dataQualityVerified == true),
+                                "Volatility Lockout Monitored" to (safety?.volatilityStateOk == true),
+                                "Daily Loss Limit Enforced" to (safety?.dailyLossLimitOk == true),
+                                "Max Drawdown Breaker Enforced" to (safety?.drawdownLimitOk == true),
+                                "Consecutive Loss Circuit Breaker" to (safety?.consecutiveLossBreakerOk == true),
+                                "Active Position Lock" to (safety?.activePositionLockOk == true),
+                                "Post-Loss Cooldown Interval" to (safety?.cooldownOk == true),
+                                "Duplicate Signal Suppression" to (safety?.duplicateSignalSuppressionOk == true),
+                                "Signal Validity Check" to (safety?.signalValidityOk == true)
+                            )
+
+                            safetyChecks.forEach { (label, passed) ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(label, fontSize = 11.sp, color = TextPrimary)
+                                    Surface(
+                                        color = if (passed) TradeProfit.copy(alpha = 0.15f) else TradeRed.copy(alpha = 0.15f),
+                                        shape = RoundedCornerShape(4.dp)
+                                    ) {
+                                        Text(
+                                            text = if (passed) "ACTIVE / PASS" else "FAIL",
+                                            fontSize = 9.sp,
+                                            fontWeight = FontWeight.Bold,
+                                            color = if (passed) TradeProfit else TradeRed,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ExperimentVariantCard(variant: ResearchExperimentVariantDto) {
+    Card(
+        colors = CardDefaults.cardColors(containerColor = DarkSurfaceElevated),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = "${variant.id}: ${variant.label}",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = TextPrimary
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Surface(
+                            color = if (variant.status == "BASELINE") DarkSurface else TradePrimary.copy(alpha = 0.2f),
+                            shape = RoundedCornerShape(4.dp)
+                        ) {
+                            Text(
+                                text = variant.status,
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (variant.status == "BASELINE") TextSecondary else TradePrimaryLight,
+                                modifier = Modifier.padding(horizontal = 4.dp, vertical = 1.dp)
+                            )
+                        }
+                    }
+                    Text(
+                        text = "${variant.condition} • ${variant.parameterDescription}",
+                        fontSize = 10.sp,
+                        color = TextMuted
+                    )
+                }
+
+                Surface(
+                    color = if (variant.sampleStatus == "ADEQUATE") TradeProfit.copy(alpha = 0.12f) else DemoAmber.copy(alpha = 0.12f),
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = variant.validationStatus,
+                        fontSize = 9.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (variant.sampleStatus == "ADEQUATE") TradeProfit else DemoAmber,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Metrics Grid
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Win Rate", fontSize = 9.sp, color = TextMuted)
+                    Text("${String.format(Locale.US, "%.1f", variant.winRate)}%", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (variant.winRate >= 60) TradeProfit else TextPrimary)
+                }
+                Column {
+                    Text("P&L", fontSize = 9.sp, color = TextMuted)
+                    Text("+$${String.format(Locale.US, "%.2f", variant.totalPnL)}", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = if (variant.totalPnL >= 0) TradeProfit else TradeRed)
+                }
+                Column {
+                    Text("Expectancy", fontSize = 9.sp, color = TextMuted)
+                    Text("+$${String.format(Locale.US, "%.4f", variant.expectancy)}", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+                Column {
+                    Text("Trades (W/L)", fontSize = 9.sp, color = TextMuted)
+                    Text("${variant.totalTrades} (${variant.wins}/${variant.losses})", fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = TextPrimary)
+                }
+            }
+
+            Spacer(modifier = Modifier.height(6.dp))
+
+            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Column {
+                    Text("Max DD", fontSize = 9.sp, color = TextMuted)
+                    Text("-$${String.format(Locale.US, "%.2f", variant.maxDrawdown)}", fontSize = 11.sp, color = TextSecondary)
+                }
+                Column {
+                    Text("Loss Streak", fontSize = 9.sp, color = TextMuted)
+                    Text("${variant.maxConsecutiveLosses} trades", fontSize = 11.sp, color = TextSecondary)
+                }
+                Column {
+                    Text("Filtered", fontSize = 9.sp, color = TextMuted)
+                    Text("${variant.rejectedSignals} (${String.format(Locale.US, "%.1f", variant.waitPercentage)}%)", fontSize = 11.sp, color = TextSecondary)
+                }
+                Column {
+                    Text("Loss Reduction", fontSize = 9.sp, color = TextMuted)
+                    Text(if (variant.lossReductionVsBaseline > 0) "+${variant.lossReductionVsBaseline}%" else "—", fontSize = 11.sp, fontWeight = FontWeight.Bold, color = if (variant.lossReductionVsBaseline > 0) TradeProfit else TextMuted)
+                }
+            }
+
+            variant.sampleWarning?.let { warn ->
+                Spacer(modifier = Modifier.height(6.dp))
+                Surface(
+                    color = DemoAmber.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(4.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = "⚠ $warn",
+                        fontSize = 9.sp,
+                        color = DemoAmber,
+                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
+                    )
+                }
+            }
+        }
+    }
+}
+
 

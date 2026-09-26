@@ -369,7 +369,12 @@ interface ApiService {
     suspend fun getV2ValidationDashboard(
         @Query("symbol") symbol: String = "R_100"
     ): Response<V2ValidationDashboardResponse>
+
+    // Strategy V2.1 Controlled Research Lab & Hypothesis Experiments
+    @GET("api/research/strategy-v2-1/lab-dashboard")
+    suspend fun getV2_1ResearchLabDashboard(): Response<V2_1_ResearchLabDashboardResponse>
 }
+
 
 
 

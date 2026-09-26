@@ -16,6 +16,14 @@ router.get('/strategy-v2/loss-clusters', research_controller_1.getStrategyV2Loss
 router.get('/strategy-v2/diagnostic-alerts', research_controller_1.getStrategyV2DiagnosticAlerts);
 router.get('/strategy-v2/validation-dashboard', research_controller_1.getStrategyV2ValidationReport);
 router.post('/strategy-v2/collect-demo-trades', research_controller_1.collectDemoTrades);
+// Strategy V2.1: Controlled Research Lab & Hypothesis Experiments
+router.get('/strategy-v2-1/lab-dashboard', research_controller_1.getStrategyV2_1LabDashboard);
+router.get('/strategy-v2-1/experiment-matrix', research_controller_1.getStrategyV2_1ExperimentMatrix);
+router.get('/strategy-v2-1/duration-experiment', research_controller_1.getStrategyV2_1DurationExperiment);
+router.get('/strategy-v2-1/ranging-experiment', research_controller_1.getStrategyV2_1RangingExperiment);
+router.get('/strategy-v2-1/threshold-experiment', research_controller_1.getStrategyV2_1ThresholdExperiment);
+router.get('/strategy-v2-1/oos-validation', research_controller_1.getStrategyV2_1OosValidation);
+router.post('/strategy-v2-1/evaluate-signal', research_controller_1.evaluateStrategyV2_1Signal);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

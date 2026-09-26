@@ -1759,5 +1759,119 @@ export async function collectDemoTrades(req: AuthRequest, res: Response) {
   }
 }
 
+/**
+ * =====================================================================
+ * STRATEGY V2.1 CONTROLLED RESEARCH EXPERIMENT ENDPOINTS
+ * =====================================================================
+ */
+
+export async function getStrategyV2_1LabDashboard(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const dashboard = await v2_1_experimentService.getResearchLabDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      researchLabDashboard: dashboard
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_1ExperimentMatrix(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const dashboard = await v2_1_experimentService.getResearchLabDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      experimentsMatrix: dashboard.experimentsMatrix
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_1DurationExperiment(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const trades = await v2_1_experimentService.getExperimentTrades();
+    const result = v2_1_experimentService.runExperimentA(trades);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      durationExperiment: result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_1RangingExperiment(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const trades = await v2_1_experimentService.getExperimentTrades();
+    const result = v2_1_experimentService.runExperimentB(trades);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      rangingExperiment: result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_1ThresholdExperiment(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const trades = await v2_1_experimentService.getExperimentTrades();
+    const result = v2_1_experimentService.runExperimentC(trades);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      thresholdExperiment: result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_1OosValidation(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const trades = await v2_1_experimentService.getExperimentTrades();
+    const result = v2_1_experimentService.evaluateOOSValidation(trades);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      oosValidation: result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function evaluateStrategyV2_1Signal(req: AuthRequest, res: Response) {
+  try {
+    const { v2_1_experimentService } = await import('../services/research/v2_1_experiment.service');
+    const { candles, indicators, rangingConfluenceEnabled, lowRegimeMinScore, highVolatilityDuration } = req.body;
+    const result = v2_1_experimentService.evaluateSignalV2_1(candles, indicators, {
+      rangingConfluenceEnabled,
+      lowRegimeMinScore,
+      highVolatilityDuration
+    });
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      result
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+
 
 

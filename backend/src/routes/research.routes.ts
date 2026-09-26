@@ -82,7 +82,14 @@ import {
   getStrategyV2LossClusters,
   getStrategyV2DiagnosticAlerts,
   getStrategyV2ValidationReport,
-  collectDemoTrades
+  collectDemoTrades,
+  getStrategyV2_1LabDashboard,
+  getStrategyV2_1ExperimentMatrix,
+  getStrategyV2_1DurationExperiment,
+  getStrategyV2_1RangingExperiment,
+  getStrategyV2_1ThresholdExperiment,
+  getStrategyV2_1OosValidation,
+  evaluateStrategyV2_1Signal
 } from '../controllers/research.controller';
 
 
@@ -101,6 +108,16 @@ router.get('/strategy-v2/loss-clusters', getStrategyV2LossClusters);
 router.get('/strategy-v2/diagnostic-alerts', getStrategyV2DiagnosticAlerts);
 router.get('/strategy-v2/validation-dashboard', getStrategyV2ValidationReport);
 router.post('/strategy-v2/collect-demo-trades', collectDemoTrades);
+
+// Strategy V2.1: Controlled Research Lab & Hypothesis Experiments
+router.get('/strategy-v2-1/lab-dashboard', getStrategyV2_1LabDashboard);
+router.get('/strategy-v2-1/experiment-matrix', getStrategyV2_1ExperimentMatrix);
+router.get('/strategy-v2-1/duration-experiment', getStrategyV2_1DurationExperiment);
+router.get('/strategy-v2-1/ranging-experiment', getStrategyV2_1RangingExperiment);
+router.get('/strategy-v2-1/threshold-experiment', getStrategyV2_1ThresholdExperiment);
+router.get('/strategy-v2-1/oos-validation', getStrategyV2_1OosValidation);
+router.post('/strategy-v2-1/evaluate-signal', evaluateStrategyV2_1Signal);
+
 
 // Advanced backtest & analytics
 router.post('/backtest', runResearchBacktest);

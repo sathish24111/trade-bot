@@ -115,6 +115,13 @@ exports.getStrategyV2LossClusters = getStrategyV2LossClusters;
 exports.getStrategyV2DiagnosticAlerts = getStrategyV2DiagnosticAlerts;
 exports.getStrategyV2ValidationReport = getStrategyV2ValidationReport;
 exports.collectDemoTrades = collectDemoTrades;
+exports.getStrategyV2_1LabDashboard = getStrategyV2_1LabDashboard;
+exports.getStrategyV2_1ExperimentMatrix = getStrategyV2_1ExperimentMatrix;
+exports.getStrategyV2_1DurationExperiment = getStrategyV2_1DurationExperiment;
+exports.getStrategyV2_1RangingExperiment = getStrategyV2_1RangingExperiment;
+exports.getStrategyV2_1ThresholdExperiment = getStrategyV2_1ThresholdExperiment;
+exports.getStrategyV2_1OosValidation = getStrategyV2_1OosValidation;
+exports.evaluateStrategyV2_1Signal = evaluateStrategyV2_1Signal;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -1688,6 +1695,118 @@ async function collectDemoTrades(req, res) {
             ...SAFETY_METADATA,
             message: `Successfully collected ${seeded.length} demo validation trades in paper journal.`,
             collectedCount: seeded.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+/**
+ * =====================================================================
+ * STRATEGY V2.1 CONTROLLED RESEARCH EXPERIMENT ENDPOINTS
+ * =====================================================================
+ */
+async function getStrategyV2_1LabDashboard(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const dashboard = await v2_1_experimentService.getResearchLabDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            researchLabDashboard: dashboard
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_1ExperimentMatrix(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const dashboard = await v2_1_experimentService.getResearchLabDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            experimentsMatrix: dashboard.experimentsMatrix
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_1DurationExperiment(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const trades = await v2_1_experimentService.getExperimentTrades();
+        const result = v2_1_experimentService.runExperimentA(trades);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            durationExperiment: result
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_1RangingExperiment(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const trades = await v2_1_experimentService.getExperimentTrades();
+        const result = v2_1_experimentService.runExperimentB(trades);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            rangingExperiment: result
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_1ThresholdExperiment(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const trades = await v2_1_experimentService.getExperimentTrades();
+        const result = v2_1_experimentService.runExperimentC(trades);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            thresholdExperiment: result
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_1OosValidation(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const trades = await v2_1_experimentService.getExperimentTrades();
+        const result = v2_1_experimentService.evaluateOOSValidation(trades);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            oosValidation: result
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function evaluateStrategyV2_1Signal(req, res) {
+    try {
+        const { v2_1_experimentService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_1_experiment.service')));
+        const { candles, indicators, rangingConfluenceEnabled, lowRegimeMinScore, highVolatilityDuration } = req.body;
+        const result = v2_1_experimentService.evaluateSignalV2_1(candles, indicators, {
+            rangingConfluenceEnabled,
+            lowRegimeMinScore,
+            highVolatilityDuration
+        });
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            result
         });
     }
     catch (err) {
