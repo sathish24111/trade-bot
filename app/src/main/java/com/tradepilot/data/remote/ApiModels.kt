@@ -2339,6 +2339,242 @@ data class V2_3_MultiSessionDashboardResponse(
     val brokerConnected: Boolean = false
 )
 
+// ==========================================
+// STRATEGY V2.4: COMBINATION & ABLATION DTOs
+// ==========================================
+
+data class V2_4_VariantMetricsDto(
+    val variantId: String = "",
+    val label: String = "",
+    val type: String = "CONTROL",
+    val description: String = "",
+    val activeHypotheses: List<String> = emptyList(),
+    val totalObservations: Int = 0,
+    val acceptedSignals: Int = 0,
+    val rejectedSignals: Int = 0,
+    val rejectionReasons: Map<String, Int> = emptyMap(),
+    val tradesExecuted: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val averagePnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val waitPercentage: Double = 0.0,
+    val averageTradeDuration: String = "",
+    val medianTradeDuration: String = "",
+    val sampleStatus: String = "ADEQUATE_SAMPLE",
+    val promotionStatus: String = "READY_FOR_MANUAL_REVIEW",
+    val promotionRationale: String = "",
+    val disclaimer: String = ""
+)
+
+data class V2_4_AblationComparisonDto(
+    val comparisonId: String = "",
+    val title: String = "",
+    val targetVariant: String = "",
+    val referenceVariant: String = "",
+    val ablatedComponent: String = "",
+    val deltaWinRate: Double = 0.0,
+    val deltaExpectancy: Double = 0.0,
+    val deltaProfitFactor: Double = 0.0,
+    val deltaPnL: Double = 0.0,
+    val deltaDrawdown: Double = 0.0,
+    val deltaConsecutiveLosses: Double = 0.0,
+    val deltaTradeFrequency: Double = 0.0,
+    val interpretation: String = "",
+    val isContributionPositive: Boolean = true
+)
+
+data class V2_4_OptimalConfigDto(
+    val variantId: String = "",
+    val rationale: String = ""
+)
+
+data class V2_4_AblationAnalysisDto(
+    val comparisons: List<V2_4_AblationComparisonDto> = emptyList(),
+    val summaryFindings: List<String> = emptyList(),
+    val optimalConfiguration: V2_4_OptimalConfigDto = V2_4_OptimalConfigDto()
+)
+
+data class V2_4_CrossAssetMetricsDto(
+    val asset: String = "",
+    val totalObservations: Int = 0,
+    val tradesExecuted: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE"
+)
+
+data class V2_4_CrossRegimeMetricsDto(
+    val regime: String = "",
+    val totalObservations: Int = 0,
+    val tradesExecuted: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val confidenceInterval95: ConfidenceInterval95Dto = ConfidenceInterval95Dto(),
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val sampleStatus: String = "ADEQUATE_SAMPLE"
+)
+
+data class V2_4_SessionMetricsDto(
+    val sessionId: String = "",
+    val sessionIndex: Int = 0,
+    val sessionDate: String = "",
+    val totalObservations: Int = 0,
+    val acceptedTrades: Int = 0,
+    val rejectedSignals: Int = 0,
+    val wins: Int = 0,
+    val losses: Int = 0,
+    val winRate: Double = 0.0,
+    val totalPnL: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val profitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val sessionOutcome: String = "NEUTRAL",
+    val degradationDetected: Boolean = false,
+    val degradationReason: String? = null
+)
+
+data class V2_4_GateCriteriaChecksDto(
+    val multiSessionTested: Boolean = true,
+    val noSafetyViolations: Boolean = true,
+    val noLeakage: Boolean = true,
+    val oosPositive: Boolean = true,
+    val adequateSample: Boolean = true,
+    val drawdownAcceptable: Boolean = true,
+    val consecutiveLossesAcceptable: Boolean = true,
+    val expectancyPositive: Boolean = true
+)
+
+data class V2_4_GateDecisionDto(
+    val variantId: String = "",
+    val label: String = "",
+    val status: String = "READY_FOR_MANUAL_REVIEW",
+    val criteriaChecks: V2_4_GateCriteriaChecksDto = V2_4_GateCriteriaChecksDto(),
+    val decisionRationale: String = ""
+)
+
+data class V2_4_PromotionGateSummaryDto(
+    val productionStrategyStatus: String = "",
+    val gateDecisions: List<V2_4_GateDecisionDto> = emptyList(),
+    val governanceNotice: String = ""
+)
+
+data class V2_4_DatasetMetadataDto(
+    val datasetId: String = "V2.4_COMBINATION_ABLATION",
+    val totalObservations: Int = 0,
+    val totalSessions: Int = 0,
+    val startDate: String = "",
+    val endDate: String = "",
+    val assetsIncluded: List<String> = emptyList(),
+    val regimesIncluded: List<String> = emptyList(),
+    val disclaimer: String = ""
+)
+
+data class V2_4_OverviewMetricsDto(
+    val totalSessions: Int = 0,
+    val totalObservations: Int = 0,
+    val totalVariants: Int = 0,
+    val overallWinRate: Double = 0.0,
+    val overallPnL: Double = 0.0,
+    val overallExpectancy: Double = 0.0,
+    val overallProfitFactor: Double = 0.0,
+    val maxDrawdown: Double = 0.0,
+    val maxConsecutiveLosses: Int = 0,
+    val positiveSessionsCount: Int = 0,
+    val negativeSessionsCount: Int = 0,
+    val neutralSessionsCount: Int = 0
+)
+
+data class V2_4_OOSSplitDto(
+    val period: String = "",
+    val count: Int = 0,
+    val winRate: Double = 0.0,
+    val expectancy: Double = 0.0,
+    val pnl: Double = 0.0
+)
+
+data class V2_4_LeakageVerificationDto(
+    val lookaheadFree: Boolean = true,
+    val parameterLeakageFree: Boolean = true,
+    val regimeLeakageFree: Boolean = true,
+    val duplicateSignalsFree: Boolean = true,
+    val chronologicalOrderingPreserved: Boolean = true,
+    val sessionAssignmentDeterministic: Boolean = true,
+    val dataQualityChecksPassed: Boolean = true,
+    val details: String = ""
+)
+
+data class V2_4_OOSValidationDto(
+    val datasetSplits: Map<String, V2_4_OOSSplitDto> = emptyMap(),
+    val leakageVerification: V2_4_LeakageVerificationDto = V2_4_LeakageVerificationDto(),
+    val degradationRatio: Double = 0.0,
+    val verdict: String = "OOS_VALIDATED"
+)
+
+data class V2_4_RobustnessVerificationDto(
+    val lookaheadTestPassed: Boolean = true,
+    val parameterLeakageTestPassed: Boolean = true,
+    val regimeLeakageTestPassed: Boolean = true,
+    val duplicateSignalTestPassed: Boolean = true,
+    val chronologicalOrderingTestPassed: Boolean = true,
+    val sessionAssignmentTestPassed: Boolean = true,
+    val dataQualityTestPassed: Boolean = true,
+    val details: String = ""
+)
+
+data class V2_4_SafetyStatusDto(
+    val demoPaperOnly: Boolean = true,
+    val dailyLossLimitEnforced: Boolean = true,
+    val drawdownBreakerEnforced: Boolean = true,
+    val consecutiveLossBreakerEnforced: Boolean = true,
+    val activePositionLockActive: Boolean = true,
+    val cooldownIntervalActive: Boolean = true,
+    val duplicateSignalSuppressionActive: Boolean = true,
+    val dataQualityGateActive: Boolean = true,
+    val productionStrategyUnmodified: Boolean = true,
+    val disclaimer: String = ""
+)
+
+data class V2_4_CombinationDashboardDto(
+    val datasetMetadata: V2_4_DatasetMetadataDto = V2_4_DatasetMetadataDto(),
+    val overview: V2_4_OverviewMetricsDto = V2_4_OverviewMetricsDto(),
+    val variantMatrix: List<V2_4_VariantMetricsDto> = emptyList(),
+    val ablationAnalysis: V2_4_AblationAnalysisDto = V2_4_AblationAnalysisDto(),
+    val sessionsList: List<V2_4_SessionMetricsDto> = emptyList(),
+    val crossAssetAnalysis: Map<String, V2_4_CrossAssetMetricsDto> = emptyMap(),
+    val crossRegimeAnalysis: Map<String, V2_4_CrossRegimeMetricsDto> = emptyMap(),
+    val oosValidation: V2_4_OOSValidationDto = V2_4_OOSValidationDto(),
+    val robustnessVerification: V2_4_RobustnessVerificationDto = V2_4_RobustnessVerificationDto(),
+    val promotionGateSummary: V2_4_PromotionGateSummaryDto = V2_4_PromotionGateSummaryDto(),
+    val safetyStatus: V2_4_SafetyStatusDto = V2_4_SafetyStatusDto(),
+    val disclaimer: String = ""
+)
+
+data class V2_4_CombinationDashboardResponse(
+    val success: Boolean,
+    val combinationDashboard: V2_4_CombinationDashboardDto? = null,
+    val error: String? = null,
+    val mode: String = "PAPER",
+    val isRealMoney: Boolean = false,
+    val brokerConnected: Boolean = false
+)
+
+
 
 
 

@@ -381,7 +381,12 @@ interface ApiService {
     // Strategy V2.3 Multi-Session Validation & Promotion Gate Research Module
     @GET("api/research/strategy-v2-3/dashboard")
     suspend fun getV2_3MultiSessionDashboard(): Response<V2_3_MultiSessionDashboardResponse>
+
+    // Strategy V2.4 Combination & Ablation Research Phase
+    @GET("api/research/strategy-v2-4/dashboard")
+    suspend fun getV2_4CombinationDashboard(): Response<V2_4_CombinationDashboardResponse>
 }
+
 
 
 

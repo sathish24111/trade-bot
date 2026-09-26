@@ -136,6 +136,12 @@ exports.getStrategyV2_3CrossRegime = getStrategyV2_3CrossRegime;
 exports.getStrategyV2_3OosValidation = getStrategyV2_3OosValidation;
 exports.getStrategyV2_3PromotionGate = getStrategyV2_3PromotionGate;
 exports.collectMultiSessionDatasetV2_3 = collectMultiSessionDatasetV2_3;
+exports.getStrategyV2_4CombinationDashboard = getStrategyV2_4CombinationDashboard;
+exports.getStrategyV2_4Variants = getStrategyV2_4Variants;
+exports.getStrategyV2_4Ablation = getStrategyV2_4Ablation;
+exports.getStrategyV2_4OosValidation = getStrategyV2_4OosValidation;
+exports.getStrategyV2_4PromotionGate = getStrategyV2_4PromotionGate;
+exports.collectCombinationDatasetV2_4 = collectCombinationDatasetV2_4;
 const backtesting_service_1 = require("../services/backtesting.service");
 const optimization_service_1 = require("../services/research/optimization.service");
 const walkForward_service_1 = require("../services/research/walkForward.service");
@@ -2039,6 +2045,102 @@ async function collectMultiSessionDatasetV2_3(req, res) {
             totalTrades: trades.length,
             sessionsCount: sessions,
             datasetId: 'V2.3_MULTI_SESSION'
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+/**
+ * =====================================================================
+ * STRATEGY V2.4 COMBINATION & ABLATION RESEARCH ENDPOINTS
+ * =====================================================================
+ */
+async function getStrategyV2_4CombinationDashboard(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const dashboard = await v2_4_combinationService.getCombinationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            combinationDashboard: dashboard
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_4Variants(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const dashboard = await v2_4_combinationService.getCombinationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            variants: dashboard.variantMatrix,
+            totalVariants: dashboard.variantMatrix.length
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_4Ablation(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const dashboard = await v2_4_combinationService.getCombinationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            ablationAnalysis: dashboard.ablationAnalysis
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_4OosValidation(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const dashboard = await v2_4_combinationService.getCombinationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            oosValidation: dashboard.oosValidation,
+            robustnessVerification: dashboard.robustnessVerification
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function getStrategyV2_4PromotionGate(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const dashboard = await v2_4_combinationService.getCombinationDashboard();
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            promotionGateSummary: dashboard.promotionGateSummary
+        });
+    }
+    catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+}
+async function collectCombinationDatasetV2_4(req, res) {
+    try {
+        const { v2_4_combinationService } = await Promise.resolve().then(() => __importStar(require('../services/research/v2_4_combination.service')));
+        const sessions = req.body.sessions ? Number(req.body.sessions) : 10;
+        const tradesPerSession = req.body.tradesPerSession ? Number(req.body.tradesPerSession) : 80;
+        const trades = await v2_4_combinationService.getOrSeedCombinationDataset(sessions, tradesPerSession);
+        res.json({
+            success: true,
+            ...SAFETY_METADATA,
+            message: `Successfully generated ${trades.length} combination/ablation demo observations across ${sessions} sessions under dataset V2.4_COMBINATION_ABLATION.`,
+            totalTrades: trades.length,
+            sessionsCount: sessions,
+            datasetId: 'V2.4_COMBINATION_ABLATION'
         });
     }
     catch (err) {

@@ -40,6 +40,13 @@ router.get('/strategy-v2-3/cross-regime', research_controller_1.getStrategyV2_3C
 router.get('/strategy-v2-3/oos-validation', research_controller_1.getStrategyV2_3OosValidation);
 router.get('/strategy-v2-3/promotion-gate', research_controller_1.getStrategyV2_3PromotionGate);
 router.post('/strategy-v2-3/collect-dataset', research_controller_1.collectMultiSessionDatasetV2_3);
+// Strategy V2.4: Combination & Ablation Research Phase
+router.get('/strategy-v2-4/dashboard', research_controller_1.getStrategyV2_4CombinationDashboard);
+router.get('/strategy-v2-4/variants', research_controller_1.getStrategyV2_4Variants);
+router.get('/strategy-v2-4/ablation', research_controller_1.getStrategyV2_4Ablation);
+router.get('/strategy-v2-4/oos-validation', research_controller_1.getStrategyV2_4OosValidation);
+router.get('/strategy-v2-4/promotion-gate', research_controller_1.getStrategyV2_4PromotionGate);
+router.post('/strategy-v2-4/collect-dataset', research_controller_1.collectCombinationDatasetV2_4);
 // Advanced backtest & analytics
 router.post('/backtest', research_controller_1.runResearchBacktest);
 // Parameter optimization & overfitting detection

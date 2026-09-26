@@ -103,7 +103,13 @@ import {
   getStrategyV2_3CrossRegime,
   getStrategyV2_3OosValidation,
   getStrategyV2_3PromotionGate,
-  collectMultiSessionDatasetV2_3
+  collectMultiSessionDatasetV2_3,
+  getStrategyV2_4CombinationDashboard,
+  getStrategyV2_4Variants,
+  getStrategyV2_4Ablation,
+  getStrategyV2_4OosValidation,
+  getStrategyV2_4PromotionGate,
+  collectCombinationDatasetV2_4
 } from '../controllers/research.controller';
 
 
@@ -149,6 +155,14 @@ router.get('/strategy-v2-3/cross-regime', getStrategyV2_3CrossRegime);
 router.get('/strategy-v2-3/oos-validation', getStrategyV2_3OosValidation);
 router.get('/strategy-v2-3/promotion-gate', getStrategyV2_3PromotionGate);
 router.post('/strategy-v2-3/collect-dataset', collectMultiSessionDatasetV2_3);
+
+// Strategy V2.4: Combination & Ablation Research Phase
+router.get('/strategy-v2-4/dashboard', getStrategyV2_4CombinationDashboard);
+router.get('/strategy-v2-4/variants', getStrategyV2_4Variants);
+router.get('/strategy-v2-4/ablation', getStrategyV2_4Ablation);
+router.get('/strategy-v2-4/oos-validation', getStrategyV2_4OosValidation);
+router.get('/strategy-v2-4/promotion-gate', getStrategyV2_4PromotionGate);
+router.post('/strategy-v2-4/collect-dataset', collectCombinationDatasetV2_4);
 
 
 

@@ -13,6 +13,7 @@ interface ResearchRepository {
     suspend fun getV2_1ResearchLabDashboard(): Result<V2_1_ResearchLabDashboardDto>
     suspend fun getV2_2FreshValidationDashboard(): Result<V2_2_FreshValidationDashboardDto>
     suspend fun getV2_3MultiSessionDashboard(): Result<V2_3_MultiSessionDashboardDto>
+    suspend fun getV2_4CombinationDashboard(): Result<V2_4_CombinationDashboardDto>
 }
 
 

@@ -2092,6 +2092,103 @@ export async function collectMultiSessionDatasetV2_3(req: AuthRequest, res: Resp
   }
 }
 
+/**
+ * =====================================================================
+ * STRATEGY V2.4 COMBINATION & ABLATION RESEARCH ENDPOINTS
+ * =====================================================================
+ */
+
+export async function getStrategyV2_4CombinationDashboard(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const dashboard = await v2_4_combinationService.getCombinationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      combinationDashboard: dashboard
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_4Variants(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const dashboard = await v2_4_combinationService.getCombinationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      variants: dashboard.variantMatrix,
+      totalVariants: dashboard.variantMatrix.length
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_4Ablation(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const dashboard = await v2_4_combinationService.getCombinationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      ablationAnalysis: dashboard.ablationAnalysis
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_4OosValidation(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const dashboard = await v2_4_combinationService.getCombinationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      oosValidation: dashboard.oosValidation,
+      robustnessVerification: dashboard.robustnessVerification
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function getStrategyV2_4PromotionGate(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const dashboard = await v2_4_combinationService.getCombinationDashboard();
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      promotionGateSummary: dashboard.promotionGateSummary
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
+export async function collectCombinationDatasetV2_4(req: AuthRequest, res: Response) {
+  try {
+    const { v2_4_combinationService } = await import('../services/research/v2_4_combination.service');
+    const sessions = req.body.sessions ? Number(req.body.sessions) : 10;
+    const tradesPerSession = req.body.tradesPerSession ? Number(req.body.tradesPerSession) : 80;
+    const trades = await v2_4_combinationService.getOrSeedCombinationDataset(sessions, tradesPerSession);
+    res.json({
+      success: true,
+      ...SAFETY_METADATA,
+      message: `Successfully generated ${trades.length} combination/ablation demo observations across ${sessions} sessions under dataset V2.4_COMBINATION_ABLATION.`,
+      totalTrades: trades.length,
+      sessionsCount: sessions,
+      datasetId: 'V2.4_COMBINATION_ABLATION'
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+}
+
 
 
 
